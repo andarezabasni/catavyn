@@ -1,27 +1,38 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Check, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Trash2, ChevronDown, FolderOpen } from 'lucide-react'
+import type { Category } from '../../hooks/useCategories'
 
 interface NoteEditorProps {
   initialTitle?: string
   initialContent?: string
+  categoryId?: string | null
+  categories?: Category[]
   onSave: (title: string, content: string) => Promise<void>
   onBack: () => void
   onDelete?: () => void
+  onCategoryChange?: (categoryId: string | null) => void
 }
 
 export default function NoteEditor({
   initialTitle = '',
   initialContent = '',
+  categoryId = null,
+  categories = [],
   onSave,
   onBack,
   onDelete,
+  onCategoryChange,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [catOpen, setCatOpen] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const catDropdownRef = useRef<HTMLDivElement>(null)
   const didFocus = useRef(false)
+
+  const currentCategory = categories.find(c => c.id === categoryId) ?? null
 
   function resize() {
     const el = textareaRef.current
@@ -30,10 +41,8 @@ export default function NoteEditor({
     el.style.height = `${el.scrollHeight}px`
   }
 
-  // Resize textarea whenever content changes
   useEffect(() => { resize() }, [content])
 
-  // Focus appropriate field on mount
   useEffect(() => {
     if (didFocus.current) return
     didFocus.current = true
@@ -44,6 +53,18 @@ export default function NoteEditor({
     }
   }, [initialTitle])
 
+  // Close category dropdown on outside click
+  useEffect(() => {
+    if (!catOpen) return
+    function handleClick(e: MouseEvent) {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
+        setCatOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [catOpen])
+
   const save = useCallback(async () => {
     if (status === 'saving') return
     setStatus('saving')
@@ -52,7 +73,6 @@ export default function NoteEditor({
     setTimeout(() => setStatus('idle'), 2000)
   }, [status, onSave, title, content])
 
-  // Ctrl+S / Cmd+S
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -63,6 +83,11 @@ export default function NoteEditor({
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [save])
+
+  function selectCategory(id: string | null) {
+    setCatOpen(false)
+    onCategoryChange?.(id)
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -121,6 +146,63 @@ export default function NoteEditor({
           maxLength={200}
           className="w-full bg-transparent text-text-primary font-semibold text-2xl placeholder:text-text-muted focus:outline-none mb-4"
         />
+
+        {/* Category picker */}
+        {onCategoryChange && (
+          <div className="mb-4" ref={catDropdownRef}>
+            <div className="relative inline-block">
+              <button
+                type="button"
+                onClick={() => setCatOpen(v => !v)}
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-text-muted hover:border-accent-gold/50 hover:text-text-secondary transition-colors"
+              >
+                {currentCategory ? (
+                  <>
+                    <span>{currentCategory.icon}</span>
+                    <span className="font-medium text-text-secondary">{currentCategory.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <FolderOpen size={12} />
+                    <span>Add to category</span>
+                  </>
+                )}
+                <ChevronDown size={11} className={`transition-transform ${catOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {catOpen && (
+                <div className="absolute top-full left-0 mt-1 z-20 bg-bg-card rounded-xl border border-border shadow-lg py-1 min-w-44">
+                  <button
+                    type="button"
+                    onClick={() => selectCategory(null)}
+                    className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs hover:bg-bg-page transition-colors ${
+                      !categoryId ? 'text-text-primary font-medium' : 'text-text-secondary'
+                    }`}
+                  >
+                    <FolderOpen size={13} className="text-text-muted" />
+                    No category
+                  </button>
+                  {categories.length > 0 && (
+                    <div className="border-t border-border my-1" />
+                  )}
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => selectCategory(cat.id)}
+                      className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs hover:bg-bg-page transition-colors ${
+                        categoryId === cat.id ? 'text-text-primary font-medium' : 'text-text-secondary'
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-border mb-6" />
 

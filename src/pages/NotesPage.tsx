@@ -19,6 +19,8 @@ export default function NotesPage() {
 
   const [undoNote, setUndoNote] = useState<{ id: string; title: string } | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Tracks category for new notes before first save
+  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
 
   const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
 
@@ -28,6 +30,7 @@ export default function NotesPage() {
 
   function openNew() {
     setEditingNoteId(null)
+    setPendingCategoryId(categoryFilter)
     setEditorOpen(true)
   }
 
@@ -45,8 +48,16 @@ export default function NotesPage() {
     if (editingNoteId) {
       await updateNote(editingNoteId, { title, content })
     } else {
-      const created = await createNote({ title, content, category_id: categoryFilter ?? undefined })
+      const created = await createNote({ title, content, category_id: pendingCategoryId ?? undefined })
       if (created) setEditingNoteId(created.id)
+    }
+  }
+
+  async function handleCategoryChange(catId: string | null) {
+    if (editingNoteId) {
+      await updateNote(editingNoteId, { category_id: catId })
+    } else {
+      setPendingCategoryId(catId)
     }
   }
 
@@ -71,9 +82,12 @@ export default function NotesPage() {
         <NoteEditor
           initialTitle={editingNote?.title ?? ''}
           initialContent={editingNote?.content ?? ''}
+          categoryId={editingNote?.category_id ?? pendingCategoryId}
+          categories={categories}
           onSave={handleSave}
           onBack={closeEditor}
           onDelete={editingNote ? () => handleDelete(editingNote) : undefined}
+          onCategoryChange={handleCategoryChange}
         />
         {undoNote && <UndoToast title={undoNote.title} onUndo={handleUndo} />}
       </>
