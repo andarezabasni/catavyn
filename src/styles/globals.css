@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@theme {
+  /* Backgrounds */
+  --color-bg-page:       #E8E0D0;
+  --color-bg-card:       #F5F0E8;
+  --color-bg-sidebar:    #D9D0C0;
+  --color-bg-task-panel: #6B7B6A;
+
+  /* Text */
+  --color-text-primary:   #2C2C2C;
+  --color-text-secondary: #6B6560;
+  --color-text-muted:     #9B9590;
+
+  /* Accents */
+  --color-accent-gold:  #C4A84D;
+  --color-accent-green: #6B8B6A;
+
+  /* Tags */
+  --color-tag-campus:   #5B8B5A;
+  --color-tag-work:     #8B8B6A;
+  --color-tag-personal: #C4844D;
+  --color-tag-ideas:    #C4A84D;
+
+  /* Priority */
+  --color-priority-high: #E8C080;
+  --color-priority-med:  #C8E0C8;
+  --color-priority-low:  #E0D8D0;
+
+  /* Border */
+  --color-border: #D0C8B8;
+
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-sans:    'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Base font size */
+  --text-base: 14px;
+}
+
+/* Base resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
