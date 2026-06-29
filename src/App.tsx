@@ -1,13 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import MainLayout from './components/layout/MainLayout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import HomePage from './pages/HomePage'
+import NotesPage from './pages/NotesPage'
+import TagsPage from './pages/TagsPage'
+import PinnedPage from './pages/PinnedPage'
+import TrashPage from './pages/TrashPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
   if (loading) return null
   if (!session) return <Navigate to="/login" replace />
-  return <>{children}</>
+  return <MainLayout>{children}</MainLayout>
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -18,24 +24,16 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { session, loading } = useAuth()
-  if (loading) return null
-
   return (
     <Routes>
-      <Route path="/login" element={
-        <PublicRoute><LoginPage /></PublicRoute>
-      } />
-      <Route path="/register" element={
-        <PublicRoute><RegisterPage /></PublicRoute>
-      } />
-      <Route path="/*" element={
-        <ProtectedRoute>
-          <div className="min-h-screen bg-bg-page flex items-center justify-center">
-            <p className="text-text-secondary">Home — coming in step 1.9</p>
-          </div>
-        </ProtectedRoute>
-      } />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+      <Route path="/tags" element={<ProtectedRoute><TagsPage /></ProtectedRoute>} />
+      <Route path="/pinned" element={<ProtectedRoute><PinnedPage /></ProtectedRoute>} />
+      <Route path="/trash" element={<ProtectedRoute><TrashPage /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
