@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus, Pin, Bell, Clock } from 'lucide-react'
+import { Plus, Pin, Bell, Clock, CheckSquare } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
 import { useNotes } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
@@ -8,6 +8,7 @@ import { useTasks, type Task } from '../hooks/useTasks'
 import { useAuth } from '../context/AuthContext'
 import NoteCard from '../components/notes/NoteCard'
 import PriorityBadge from '../components/tasks/PriorityBadge'
+import TaskPanel from '../components/tasks/TaskPanel'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -55,6 +56,7 @@ export default function HomePage() {
   const [catName, setCatName] = useState('')
   const [catIcon, setCatIcon] = useState('📁')
   const [catCreating, setCatCreating] = useState(false)
+  const [panelOpen, setPanelOpen] = useState(true)
 
   async function handleCreateCategory(e: React.FormEvent) {
     e.preventDefault()
@@ -74,139 +76,178 @@ export default function HomePage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Greeting */}
-      <div className="mb-8">
-        <h1 className="text-text-primary font-semibold text-2xl">
-          {greeting}, {firstName}
-        </h1>
-        <p className="text-text-muted text-sm mt-1">{today}</p>
-      </div>
+    <>
+      {/* Main scrollable content — shifts left of task panel on lg+ */}
+      <div className={`p-6 transition-[padding] duration-300 ${panelOpen ? 'lg:pr-80' : ''}`}>
+        <div className="max-w-4xl mx-auto">
 
-      {/* Categories */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-text-primary font-semibold text-base">Categories</h2>
-          {!showCatForm && (
-            <button
-              onClick={() => setShowCatForm(true)}
-              className="flex items-center gap-1.5 text-sm text-accent-gold hover:opacity-75 font-medium transition-opacity"
-            >
-              <Plus size={15} />
-              New category
-            </button>
-          )}
-        </div>
-
-        {showCatForm && (
-          <form
-            onSubmit={handleCreateCategory}
-            className="mb-4 bg-bg-card rounded-xl border border-border p-4 flex flex-wrap gap-3 items-center"
-          >
-            <input
-              type="text"
-              placeholder="Category name"
-              value={catName}
-              onChange={e => setCatName(e.target.value)}
-              autoFocus
-              maxLength={40}
-              className="flex-1 min-w-0 rounded-lg border border-border bg-bg-page px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-gold"
-            />
-            <input
-              type="text"
-              value={catIcon}
-              onChange={e => setCatIcon(e.target.value)}
-              title="Icon (emoji)"
-              className="w-14 text-center rounded-lg border border-border bg-bg-page px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold"
-            />
-            <button
-              type="submit"
-              disabled={catCreating || !catName.trim()}
-              className="rounded-lg bg-accent-gold px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {catCreating ? 'Adding…' : 'Add'}
-            </button>
+          {/* Greeting + panel toggle */}
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-text-primary font-semibold text-2xl">
+                {greeting}, {firstName}
+              </h1>
+              <p className="text-text-muted text-sm mt-1">{today}</p>
+            </div>
             <button
               type="button"
-              onClick={cancelCatForm}
-              className="rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-text-secondary transition-colors"
+              onClick={() => setPanelOpen(p => !p)}
+              aria-label={panelOpen ? 'Close task panel' : 'Open task panel'}
+              className={`shrink-0 mt-1 p-2 rounded-lg border transition-colors ${
+                panelOpen
+                  ? 'bg-bg-task-panel text-white border-transparent'
+                  : 'bg-bg-card border-border text-text-muted hover:text-text-primary'
+              }`}
             >
-              Cancel
+              <CheckSquare size={16} />
             </button>
-          </form>
-        )}
+          </div>
 
-        {categories.length === 0 ? (
-          <EmptyHint>No categories yet. Create one to organize your notes.</EmptyHint>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {categories.map(cat => (
-              <CategoryCard
-                key={cat.id}
-                category={cat}
-                noteCount={noteCounts[cat.id] ?? 0}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+          {/* Categories */}
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-text-primary font-semibold text-base">Categories</h2>
+              {!showCatForm && (
+                <button
+                  onClick={() => setShowCatForm(true)}
+                  className="flex items-center gap-1.5 text-sm text-accent-gold hover:opacity-75 font-medium transition-opacity"
+                >
+                  <Plus size={15} />
+                  New category
+                </button>
+              )}
+            </div>
 
-      {/* Reminders */}
-      {upcomingTasks.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell size={15} className="text-accent-gold" />
-            <h2 className="text-text-primary font-semibold text-base">Reminders</h2>
-          </div>
-          <div className="flex flex-col gap-2">
-            {upcomingTasks.map(task => (
-              <ReminderRow key={task.id} task={task} todayISO={todayISO} />
-            ))}
-          </div>
-        </section>
+            {showCatForm && (
+              <form
+                onSubmit={handleCreateCategory}
+                className="mb-4 bg-bg-card rounded-xl border border-border p-4 flex flex-wrap gap-3 items-center"
+              >
+                <input
+                  type="text"
+                  placeholder="Category name"
+                  value={catName}
+                  onChange={e => setCatName(e.target.value)}
+                  autoFocus
+                  maxLength={40}
+                  className="flex-1 min-w-0 rounded-lg border border-border bg-bg-page px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-gold"
+                />
+                <input
+                  type="text"
+                  value={catIcon}
+                  onChange={e => setCatIcon(e.target.value)}
+                  title="Icon (emoji)"
+                  className="w-14 text-center rounded-lg border border-border bg-bg-page px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold"
+                />
+                <button
+                  type="submit"
+                  disabled={catCreating || !catName.trim()}
+                  className="rounded-lg bg-accent-gold px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {catCreating ? 'Adding…' : 'Add'}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelCatForm}
+                  className="rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-text-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+
+            {categories.length === 0 ? (
+              <EmptyHint>No categories yet. Create one to organize your notes.</EmptyHint>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {categories.map(cat => (
+                  <CategoryCard
+                    key={cat.id}
+                    category={cat}
+                    noteCount={noteCounts[cat.id] ?? 0}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Reminders */}
+          {upcomingTasks.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Bell size={15} className="text-accent-gold" />
+                <h2 className="text-text-primary font-semibold text-base">Reminders</h2>
+              </div>
+              <div className="flex flex-col gap-2">
+                {upcomingTasks.map(task => (
+                  <ReminderRow key={task.id} task={task} todayISO={todayISO} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Pinned Notes */}
+          {pinnedNotes.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Pin size={15} className="text-accent-gold" />
+                <h2 className="text-text-primary font-semibold text-base">Pinned</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {pinnedNotes.map(note => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    tags={noteTagsMap[note.id] ?? []}
+                    onClick={() => navigate(`/notes?edit=${note.id}`)}
+                    onPin={() => togglePin(note.id, !note.is_pinned)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Recent Notes */}
+          <section>
+            <h2 className="text-text-primary font-semibold text-base mb-4">Recent Notes</h2>
+            {recentNotes.length === 0 ? (
+              <EmptyHint>No notes yet. Head to Notes to create your first one.</EmptyHint>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {recentNotes.map(note => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    tags={noteTagsMap[note.id] ?? []}
+                    onClick={() => navigate(`/notes?edit=${note.id}`)}
+                    onPin={() => togglePin(note.id, !note.is_pinned)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+        </div>
+      </div>
+
+      {/* Mobile/tablet backdrop — tap to close panel */}
+      {panelOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-text-primary/20 lg:hidden"
+          onClick={() => setPanelOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
-      {/* Pinned Notes */}
-      {pinnedNotes.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Pin size={15} className="text-accent-gold" />
-            <h2 className="text-text-primary font-semibold text-base">Pinned</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {pinnedNotes.map(note => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                tags={noteTagsMap[note.id] ?? []}
-                onClick={() => navigate(`/notes?edit=${note.id}`)}
-                onPin={() => togglePin(note.id, !note.is_pinned)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Recent Notes */}
-      <section>
-        <h2 className="text-text-primary font-semibold text-base mb-4">Recent Notes</h2>
-        {recentNotes.length === 0 ? (
-          <EmptyHint>No notes yet. Head to Notes to create your first one.</EmptyHint>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recentNotes.map(note => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                tags={noteTagsMap[note.id] ?? []}
-                onClick={() => navigate(`/notes?edit=${note.id}`)}
-                onPin={() => togglePin(note.id, !note.is_pinned)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+      {/* Task Panel — fixed right sidebar */}
+      <div
+        className={`fixed right-0 top-0 h-screen w-80 z-30 transition-transform duration-300 ${
+          panelOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <TaskPanel />
+      </div>
+    </>
   )
 }
 
@@ -237,8 +278,8 @@ function ReminderRow({ task, todayISO }: { task: Task; todayISO: string }) {
   const tomorrowISO = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
 
   let dateLabel: string
-  if (task.due_date === todayISO)     dateLabel = 'Today'
-  else if (task.due_date === tomorrowISO) dateLabel = 'Tomorrow'
+  if (task.due_date === todayISO)          dateLabel = 'Today'
+  else if (task.due_date === tomorrowISO)  dateLabel = 'Tomorrow'
   else dateLabel = new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', {
     month: 'short', day: 'numeric',
   })
