@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTasks } from '../../hooks/useTasks'
 import TaskItem from './TaskItem'
 import TaskForm from './TaskForm'
+import MiniCalendar from './MiniCalendar'
 
 function toISODate(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -26,16 +27,27 @@ export default function TaskPanel() {
   const dateStr = toISODate(selectedDate)
   const isToday = dateStr === toISODate(new Date())
 
-  const { tasks, loading, createTask, updateTask, deleteTask, toggleComplete } = useTasks(dateStr)
+  // Fetch all tasks — filter client-side for daily view, compute dots for calendar
+  const { tasks: allTasks, loading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
 
-  const [editingId, setEditingId]     = useState<string | null>(null)
-  const [showCreate, setShowCreate]   = useState(false)
+  const tasks = useMemo(
+    () => allTasks.filter(t => t.due_date === dateStr),
+    [allTasks, dateStr]
+  )
+
+  const taskDates = useMemo(
+    () => new Set(allTasks.map(t => t.due_date).filter(Boolean) as string[]),
+    [allTasks]
+  )
+
+  const [editingId, setEditingId]   = useState<string | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
 
   function prevDay() { setSelectedDate(d => new Date(d.getTime() - 86400000)) }
   function nextDay() { setSelectedDate(d => new Date(d.getTime() + 86400000)) }
   function goToday() { setSelectedDate(new Date()) }
 
-  const editingTask = editingId ? tasks.find(t => t.id === editingId) : undefined
+  const editingTask = editingId ? allTasks.find(t => t.id === editingId) : undefined
 
   const pending   = tasks.filter(t => !t.is_completed)
   const completed = tasks.filter(t => t.is_completed)
@@ -44,7 +56,7 @@ export default function TaskPanel() {
     <>
       <div className="flex flex-col h-full bg-bg-task-panel text-white select-none">
         {/* Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-white/10">
+        <div className="px-5 pt-5 pb-3 border-b border-white/10">
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -85,6 +97,13 @@ export default function TaskPanel() {
             })}
           </p>
         </div>
+
+        {/* Mini Calendar */}
+        <MiniCalendar
+          selectedDate={selectedDate}
+          taskDates={taskDates}
+          onSelect={setSelectedDate}
+        />
 
         {/* Task list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 min-h-0">
@@ -146,7 +165,7 @@ export default function TaskPanel() {
         <TaskForm
           defaultDate={dateStr}
           onSave={async (data) => {
-            await createTask({ ...data, position: tasks.length })
+            await createTask({ ...data, position: allTasks.length })
             setShowCreate(false)
           }}
           onClose={() => setShowCreate(false)}

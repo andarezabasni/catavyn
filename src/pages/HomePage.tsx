@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus, Pin } from 'lucide-react'
+import { Plus, Pin, Bell, Clock } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
 import { useNotes } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
+import { useTasks, type Task } from '../hooks/useTasks'
 import { useAuth } from '../context/AuthContext'
 import NoteCard from '../components/notes/NoteCard'
+import PriorityBadge from '../components/tasks/PriorityBadge'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -13,6 +15,22 @@ export default function HomePage() {
   const { categories, createCategory } = useCategories()
   const { notes, togglePin } = useNotes()
   const { noteTagsMap } = useTags()
+  const { tasks: allTasks } = useTasks()
+
+  const todayISO = new Date().toISOString().slice(0, 10)
+
+  const upcomingTasks = useMemo(() => {
+    return allTasks
+      .filter(t => !t.is_completed && t.due_date !== null && t.due_date >= todayISO)
+      .sort((a, b) => {
+        if (a.due_date! < b.due_date!) return -1
+        if (a.due_date! > b.due_date!) return 1
+        if ((a.due_time ?? '') < (b.due_time ?? '')) return -1
+        if ((a.due_time ?? '') > (b.due_time ?? '')) return 1
+        return 0
+      })
+      .slice(0, 5)
+  }, [allTasks, todayISO])
 
   const firstName = user?.email?.split('@')[0] ?? 'there'
   const hour = new Date().getHours()
@@ -133,6 +151,21 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* Reminders */}
+      {upcomingTasks.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell size={15} className="text-accent-gold" />
+            <h2 className="text-text-primary font-semibold text-base">Reminders</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {upcomingTasks.map(task => (
+              <ReminderRow key={task.id} task={task} todayISO={todayISO} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Pinned Notes */}
       {pinnedNotes.length > 0 && (
         <section className="mb-8">
@@ -196,6 +229,37 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-dashed border-border p-8 text-center">
       <p className="text-text-muted text-sm">{children}</p>
+    </div>
+  )
+}
+
+function ReminderRow({ task, todayISO }: { task: Task; todayISO: string }) {
+  const tomorrowISO = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+
+  let dateLabel: string
+  if (task.due_date === todayISO)     dateLabel = 'Today'
+  else if (task.due_date === tomorrowISO) dateLabel = 'Tomorrow'
+  else dateLabel = new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric',
+  })
+
+  const timeLabel = task.due_time ? task.due_time.slice(0, 5) : null
+
+  return (
+    <div className="flex items-center gap-3 bg-bg-card rounded-xl border border-border px-4 py-3">
+      <PriorityBadge priority={task.priority} />
+      <span className="flex-1 min-w-0 text-sm text-text-primary truncate">{task.title}</span>
+      <div className="flex items-center gap-1.5 shrink-0 text-xs text-text-muted">
+        {timeLabel && (
+          <>
+            <Clock size={11} />
+            <span>{timeLabel}</span>
+          </>
+        )}
+        <span className={task.due_date === todayISO ? 'text-accent-gold font-medium' : ''}>
+          {dateLabel}
+        </span>
+      </div>
     </div>
   )
 }
