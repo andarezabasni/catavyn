@@ -239,13 +239,13 @@ export default function HomePage() {
         />
       )}
 
-      {/* Task Panel — fixed right sidebar */}
+      {/* Task Panel — full-screen modal on mobile, fixed right sidebar on lg+ */}
       <div
-        className={`fixed right-0 top-0 h-screen w-80 z-30 transition-transform duration-300 ${
+        className={`fixed inset-0 z-40 lg:inset-auto lg:right-0 lg:top-0 lg:h-screen lg:w-80 lg:z-30 transition-transform duration-300 ${
           panelOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <TaskPanel />
+        <TaskPanel onClose={() => setPanelOpen(false)} />
       </div>
     </>
   )

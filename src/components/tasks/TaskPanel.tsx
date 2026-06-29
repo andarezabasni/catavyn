@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useTasks } from '../../hooks/useTasks'
 import TaskItem from './TaskItem'
 import TaskForm from './TaskForm'
 import MiniCalendar from './MiniCalendar'
+
+interface TaskPanelProps {
+  onClose?: () => void
+}
 
 function toISODate(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -22,7 +26,7 @@ function formatHeader(d: Date): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-export default function TaskPanel() {
+export default function TaskPanel({ onClose }: TaskPanelProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const dateStr = toISODate(selectedDate)
   const isToday = dateStr === toISODate(new Date())
@@ -55,6 +59,21 @@ export default function TaskPanel() {
   return (
     <>
       <div className="flex flex-col h-full bg-bg-task-panel text-white select-none">
+        {/* Mobile-only close bar */}
+        {onClose && (
+          <div className="lg:hidden flex items-center justify-between px-5 pt-4 pb-1">
+            <span className="text-sm font-semibold text-white/70">Tasks</span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close task panel"
+              className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-white/10">
           <div className="flex items-center justify-between">
