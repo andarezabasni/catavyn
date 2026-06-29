@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { LayoutGrid, List, Plus, RotateCcw } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
+import { useTags } from '../hooks/useTags'
 import NoteEditor from '../components/notes/NoteEditor'
 import NoteCard from '../components/notes/NoteCard'
 import type { Note } from '../hooks/useNotes'
@@ -11,6 +12,7 @@ type ViewMode = 'grid' | 'list'
 export default function NotesPage() {
   const { notes, loading, createNote, updateNote, deleteNote, restoreNote } = useNotes()
   const { categories } = useCategories()
+  const { tags, noteTagsMap, createTag, attachTag, detachTag } = useTags()
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
@@ -19,8 +21,9 @@ export default function NotesPage() {
 
   const [undoNote, setUndoNote] = useState<{ id: string; title: string } | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Tracks category for new notes before first save
+  // Tracks category + tags for new notes before first save
   const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
+  const [pendingTagIds, setPendingTagIds] = useState<string[]>([])
 
   const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
 
@@ -31,11 +34,13 @@ export default function NotesPage() {
   function openNew() {
     setEditingNoteId(null)
     setPendingCategoryId(categoryFilter)
+    setPendingTagIds([])
     setEditorOpen(true)
   }
 
   function openEdit(note: Note) {
     setEditingNoteId(note.id)
+    setPendingTagIds([])
     setEditorOpen(true)
   }
 
@@ -49,7 +54,16 @@ export default function NotesPage() {
       await updateNote(editingNoteId, { title, content })
     } else {
       const created = await createNote({ title, content, category_id: pendingCategoryId ?? undefined })
-      if (created) setEditingNoteId(created.id)
+      if (created) {
+        setEditingNoteId(created.id)
+        await Promise.all(
+          pendingTagIds.map(tagId => {
+            const tag = tags.find(t => t.id === tagId)
+            return tag ? attachTag(created.id, tag) : Promise.resolve()
+          })
+        )
+        setPendingTagIds([])
+      }
     }
   }
 
@@ -59,6 +73,35 @@ export default function NotesPage() {
     } else {
       setPendingCategoryId(catId)
     }
+  }
+
+  async function handleTagAdd(tagId: string) {
+    if (editingNoteId) {
+      const tag = tags.find(t => t.id === tagId)
+      if (tag) await attachTag(editingNoteId, tag)
+    } else {
+      setPendingTagIds(prev => prev.includes(tagId) ? prev : [...prev, tagId])
+    }
+  }
+
+  async function handleTagRemove(tagId: string) {
+    if (editingNoteId) {
+      await detachTag(editingNoteId, tagId)
+    } else {
+      setPendingTagIds(prev => prev.filter(id => id !== tagId))
+    }
+  }
+
+  async function handleTagCreate(name: string) {
+    const created = await createTag({ name })
+    if (created) {
+      if (editingNoteId) {
+        await attachTag(editingNoteId, created)
+      } else {
+        setPendingTagIds(prev => [...prev, created.id])
+      }
+    }
+    return created
   }
 
   async function handleDelete(note: Note) {
@@ -84,10 +127,15 @@ export default function NotesPage() {
           initialContent={editingNote?.content ?? ''}
           categoryId={editingNote?.category_id ?? pendingCategoryId}
           categories={categories}
+          noteTags={editingNoteId ? (noteTagsMap[editingNoteId] ?? []) : tags.filter(t => pendingTagIds.includes(t.id))}
+          allTags={tags}
           onSave={handleSave}
           onBack={closeEditor}
           onDelete={editingNote ? () => handleDelete(editingNote) : undefined}
           onCategoryChange={handleCategoryChange}
+          onTagAdd={handleTagAdd}
+          onTagRemove={handleTagRemove}
+          onTagCreate={handleTagCreate}
         />
         {undoNote && <UndoToast title={undoNote.title} onUndo={handleUndo} />}
       </>
