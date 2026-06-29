@@ -1,5 +1,6 @@
 import { Clock, Trash2 } from 'lucide-react'
 import type { Task } from '../../hooks/useTasks'
+import PriorityBadge from './PriorityBadge'
 
 interface TaskItemProps {
   task: Task
@@ -8,15 +9,7 @@ interface TaskItemProps {
   onEdit?: () => void
 }
 
-const PRIORITY_STYLES: Record<Task['priority'], { bg: string; label: string }> = {
-  high:   { bg: 'bg-priority-high',  label: 'High' },
-  medium: { bg: 'bg-priority-med',   label: 'Med' },
-  low:    { bg: 'bg-priority-low',   label: 'Low' },
-}
-
 export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemProps) {
-  const priority = PRIORITY_STYLES[task.priority]
-
   const timeLabel = task.due_time
     ? task.due_time.slice(0, 5)
     : null
@@ -64,10 +57,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemP
         )}
 
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-          {/* Priority badge */}
-          <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold text-text-primary ${priority.bg}`}>
-            {priority.label}
-          </span>
+          <PriorityBadge priority={task.priority} />
 
           {/* Due time */}
           {timeLabel && (
