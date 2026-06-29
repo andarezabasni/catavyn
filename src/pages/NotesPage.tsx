@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { LayoutGrid, List, Plus, RotateCcw } from 'lucide-react'
+import { useSearchParams } from 'react-router'
+import { LayoutGrid, List, Plus, RotateCcw, X } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
@@ -14,6 +15,10 @@ export default function NotesPage() {
   const { categories } = useCategories()
   const { tags, noteTagsMap, createTag, attachTag, detachTag } = useTags()
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlTagId = searchParams.get('tag')
+  const activeTagFilter = tags.find(t => t.id === urlTagId) ?? null
+
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -27,9 +32,14 @@ export default function NotesPage() {
 
   const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
 
-  const filteredNotes = categoryFilter
-    ? notes.filter(n => n.category_id === categoryFilter)
-    : notes
+  const filteredNotes = notes.filter(n => {
+    if (categoryFilter && n.category_id !== categoryFilter) return false
+    if (urlTagId) {
+      const noteTags = noteTagsMap[n.id] ?? []
+      if (!noteTags.some(t => t.id === urlTagId)) return false
+    }
+    return true
+  })
 
   function openNew() {
     setEditingNoteId(null)
@@ -216,13 +226,34 @@ export default function NotesPage() {
         </div>
       )}
 
+      {/* Active tag filter chip */}
+      {activeTagFilter && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-text-muted text-xs">Filtered by tag:</span>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
+            style={{ backgroundColor: activeTagFilter.color }}
+          >
+            {activeTagFilter.name}
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              aria-label="Clear tag filter"
+              className="hover:opacity-75 transition-opacity leading-none"
+            >
+              <X size={11} />
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* Notes */}
       {loading ? (
         <div className="text-text-muted text-sm">Loading…</div>
       ) : filteredNotes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-12 text-center">
           <p className="text-text-muted text-sm mb-3">
-            {categoryFilter ? 'No notes in this category.' : 'No notes yet.'}
+            {categoryFilter || urlTagId ? 'No notes match this filter.' : 'No notes yet.'}
           </p>
           <button
             onClick={openNew}
@@ -237,6 +268,7 @@ export default function NotesPage() {
             <NoteCard
               key={note.id}
               note={note}
+              tags={noteTagsMap[note.id] ?? []}
               onClick={() => openEdit(note)}
               onDelete={() => handleDelete(note)}
             />

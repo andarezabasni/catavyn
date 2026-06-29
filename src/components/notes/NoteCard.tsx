@@ -1,8 +1,7 @@
 import { Pin, Trash2 } from 'lucide-react'
 import type { Note } from '../../hooks/useNotes'
-import type { Database } from '../../lib/database.types'
-
-type Tag = Database['public']['Tables']['tags']['Row']
+import type { Tag } from '../../hooks/useTags'
+import TagBadge from '../tags/TagBadge'
 
 interface NoteCardProps {
   note: Note
@@ -41,17 +40,11 @@ export default function NoteCard({ note, tags = [], onClick, onDelete }: NoteCar
         <p className="text-text-muted text-xs leading-relaxed line-clamp-3">{excerpt}</p>
       )}
 
-      {/* Tags — populated in Phase 3 */}
+      {/* Tags */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-0.5">
           {tags.map(tag => (
-            <span
-              key={tag.id}
-              className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-              style={{ backgroundColor: tag.color }}
-            >
-              {tag.name}
-            </span>
+            <TagBadge key={tag.id} tag={tag} />
           ))}
         </div>
       )}
