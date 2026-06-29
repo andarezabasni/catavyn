@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Check, Trash2, ChevronDown, FolderOpen, X, Plus } from 'lucide-react'
+import { ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus } from 'lucide-react'
 import type { Category } from '../../hooks/useCategories'
 import type { Tag } from '../../hooks/useTags'
 
@@ -13,6 +13,8 @@ interface NoteEditorProps {
   onSave: (title: string, content: string) => Promise<void>
   onBack: () => void
   onDelete?: () => void
+  isPinned?: boolean
+  onPin?: () => void
   onCategoryChange?: (categoryId: string | null) => void
   onTagAdd?: (tagId: string) => void
   onTagRemove?: (tagId: string) => void
@@ -26,6 +28,8 @@ export default function NoteEditor({
   categories = [],
   noteTags = [],
   allTags = [],
+  isPinned = false,
+  onPin,
   onSave,
   onBack,
   onDelete,
@@ -157,6 +161,21 @@ export default function NoteEditor({
               <Check size={12} />
               Saved
             </span>
+          )}
+          {onPin && (
+            <button
+              type="button"
+              onClick={onPin}
+              aria-label={isPinned ? 'Unpin note' : 'Pin note'}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                isPinned
+                  ? 'text-accent-gold hover:opacity-75'
+                  : 'text-text-muted hover:text-accent-gold hover:bg-accent-gold/10'
+              }`}
+            >
+              <Pin size={14} />
+              <span className="hidden sm:inline">{isPinned ? 'Pinned' : 'Pin'}</span>
+            </button>
           )}
           {onDelete && (
             <button

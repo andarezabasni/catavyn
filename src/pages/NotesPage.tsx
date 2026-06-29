@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import { LayoutGrid, List, Plus, RotateCcw, X } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
@@ -11,7 +11,7 @@ import type { Note } from '../hooks/useNotes'
 type ViewMode = 'grid' | 'list'
 
 export default function NotesPage() {
-  const { notes, loading, createNote, updateNote, deleteNote, restoreNote } = useNotes()
+  const { notes, loading, createNote, updateNote, deleteNote, restoreNote, togglePin } = useNotes()
   const { categories } = useCategories()
   const { tags, noteTagsMap, createTag, attachTag, detachTag } = useTags()
 
@@ -32,14 +32,35 @@ export default function NotesPage() {
 
   const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
 
-  const filteredNotes = notes.filter(n => {
-    if (categoryFilter && n.category_id !== categoryFilter) return false
-    if (urlTagId) {
-      const noteTags = noteTagsMap[n.id] ?? []
-      if (!noteTags.some(t => t.id === urlTagId)) return false
-    }
-    return true
-  })
+  const filteredNotes = notes
+    .filter(n => {
+      if (categoryFilter && n.category_id !== categoryFilter) return false
+      if (urlTagId) {
+        const noteTags = noteTagsMap[n.id] ?? []
+        if (!noteTags.some(t => t.id === urlTagId)) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      if (a.is_pinned === b.is_pinned) return 0
+      return a.is_pinned ? -1 : 1
+    })
+
+  // Open editor via ?edit=<noteId> deep link (e.g. from PinnedPage)
+  const editParam = searchParams.get('edit')
+  useEffect(() => {
+    if (!editParam || loading || editorOpen) return
+    const note = notes.find(n => n.id === editParam)
+    if (!note) return
+    setEditingNoteId(note.id)
+    setPendingTagIds([])
+    setEditorOpen(true)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('edit')
+      return next
+    }, { replace: true })
+  }, [editParam, loading, notes, editorOpen, setSearchParams])
 
   function openNew() {
     setEditingNoteId(null)
@@ -139,6 +160,8 @@ export default function NotesPage() {
           categories={categories}
           noteTags={editingNoteId ? (noteTagsMap[editingNoteId] ?? []) : tags.filter(t => pendingTagIds.includes(t.id))}
           allTags={tags}
+          isPinned={editingNote?.is_pinned ?? false}
+          onPin={editingNote ? () => togglePin(editingNote.id, !editingNote.is_pinned) : undefined}
           onSave={handleSave}
           onBack={closeEditor}
           onDelete={editingNote ? () => handleDelete(editingNote) : undefined}
@@ -271,6 +294,7 @@ export default function NotesPage() {
               tags={noteTagsMap[note.id] ?? []}
               onClick={() => openEdit(note)}
               onDelete={() => handleDelete(note)}
+              onPin={() => togglePin(note.id, !note.is_pinned)}
             />
           ))}
         </div>

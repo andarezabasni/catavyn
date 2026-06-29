@@ -8,9 +8,10 @@ interface NoteCardProps {
   tags?: Tag[]
   onClick?: () => void
   onDelete?: () => void
+  onPin?: () => void
 }
 
-export default function NoteCard({ note, tags = [], onClick, onDelete }: NoteCardProps) {
+export default function NoteCard({ note, tags = [], onClick, onDelete, onPin }: NoteCardProps) {
   const excerpt = note.content.trim().slice(0, 120)
   const date = new Date(note.updated_at).toLocaleDateString('en-US', {
     month: 'short',
@@ -30,9 +31,22 @@ export default function NoteCard({ note, tags = [], onClick, onDelete }: NoteCar
         <span className="text-text-primary font-medium text-sm truncate flex-1">
           {note.title || 'Untitled'}
         </span>
-        {note.is_pinned && (
+        {onPin ? (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onPin() }}
+            aria-label={note.is_pinned ? 'Unpin note' : 'Pin note'}
+            className={`shrink-0 mt-0.5 p-0.5 rounded transition-all ${
+              note.is_pinned
+                ? 'text-accent-gold'
+                : 'text-text-muted opacity-0 group-hover:opacity-100 hover:text-accent-gold'
+            }`}
+          >
+            <Pin size={12} />
+          </button>
+        ) : note.is_pinned ? (
           <Pin size={12} className="text-accent-gold shrink-0 mt-0.5" />
-        )}
+        ) : null}
       </div>
 
       {/* Excerpt */}

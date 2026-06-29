@@ -148,6 +148,10 @@ export function useNotes(options: UseNotesOptions = {}) {
     }
   }, [fetchNotes])
 
+  const togglePin = useCallback(async (id: string, pinned: boolean) => {
+    await updateNote(id, { is_pinned: pinned })
+  }, [updateNote])
+
   return {
     notes,
     loading,
@@ -158,5 +162,6 @@ export function useNotes(options: UseNotesOptions = {}) {
     deleteNote,
     restoreNote,
     permanentlyDeleteNote,
+    togglePin,
   }
 }
