@@ -1,4 +1,4 @@
-import { Pin } from 'lucide-react'
+import { Pin, Trash2 } from 'lucide-react'
 import type { Note } from '../../hooks/useNotes'
 import type { Database } from '../../lib/database.types'
 
@@ -8,9 +8,10 @@ interface NoteCardProps {
   note: Note
   tags?: Tag[]
   onClick?: () => void
+  onDelete?: () => void
 }
 
-export default function NoteCard({ note, tags = [], onClick }: NoteCardProps) {
+export default function NoteCard({ note, tags = [], onClick, onDelete }: NoteCardProps) {
   const excerpt = note.content.trim().slice(0, 120)
   const date = new Date(note.updated_at).toLocaleDateString('en-US', {
     month: 'short',
@@ -21,7 +22,7 @@ export default function NoteCard({ note, tags = [], onClick }: NoteCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`text-left w-full bg-bg-card rounded-xl border border-border p-4 flex flex-col gap-1.5 transition-shadow ${
+      className={`group text-left w-full bg-bg-card rounded-xl border border-border p-4 flex flex-col gap-1.5 transition-shadow ${
         onClick ? 'hover:shadow-md cursor-pointer' : 'cursor-default'
       }`}
     >
@@ -55,8 +56,20 @@ export default function NoteCard({ note, tags = [], onClick }: NoteCardProps) {
         </div>
       )}
 
-      {/* Date */}
-      <div className="text-text-muted text-xs mt-auto pt-1">{date}</div>
+      {/* Date + delete */}
+      <div className="flex items-center justify-between mt-auto pt-1">
+        <span className="text-text-muted text-xs">{date}</span>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            aria-label="Move to trash"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
     </button>
   )
 }

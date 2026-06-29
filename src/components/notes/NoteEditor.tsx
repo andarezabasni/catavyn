@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Trash2 } from 'lucide-react'
 
 interface NoteEditorProps {
   initialTitle?: string
   initialContent?: string
   onSave: (title: string, content: string) => Promise<void>
   onBack: () => void
+  onDelete?: () => void
 }
 
 export default function NoteEditor({
@@ -13,6 +14,7 @@ export default function NoteEditor({
   initialContent = '',
   onSave,
   onBack,
+  onDelete,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
@@ -80,6 +82,17 @@ export default function NoteEditor({
               <Check size={12} />
               Saved
             </span>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              type="button"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+              aria-label="Move to trash"
+            >
+              <Trash2 size={14} />
+              <span className="hidden sm:inline">Trash</span>
+            </button>
           )}
           <button
             onClick={save}
