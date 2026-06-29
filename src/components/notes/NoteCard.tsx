@@ -6,13 +6,53 @@ import TagBadge from '../tags/TagBadge'
 interface NoteCardProps {
   note: Note
   tags?: Tag[]
+  searchQuery?: string
   onClick?: () => void
   onDelete?: () => void
   onPin?: () => void
 }
 
-export default function NoteCard({ note, tags = [], onClick, onDelete, onPin }: NoteCardProps) {
-  const excerpt = note.content.trim().slice(0, 120)
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>
+  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="bg-accent-gold/25 text-text-primary not-italic rounded px-0.5">
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  )
+}
+
+function getExcerpt(content: string, query: string, maxLen = 120): string {
+  const trimmed = content.trim()
+  if (!trimmed) return ''
+  if (!query) return trimmed.slice(0, maxLen)
+  const idx = trimmed.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return trimmed.slice(0, maxLen)
+  const start = Math.max(0, idx - 30)
+  return (start > 0 ? '…' : '') + trimmed.slice(start, start + maxLen)
+}
+
+export default function NoteCard({
+  note,
+  tags = [],
+  searchQuery = '',
+  onClick,
+  onDelete,
+  onPin,
+}: NoteCardProps) {
+  const excerpt = getExcerpt(note.content, searchQuery)
   const date = new Date(note.updated_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -29,7 +69,7 @@ export default function NoteCard({ note, tags = [], onClick, onDelete, onPin }: 
       {/* Title + pin */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-text-primary font-medium text-sm truncate flex-1">
-          {note.title || 'Untitled'}
+          <Highlight text={note.title || 'Untitled'} query={searchQuery} />
         </span>
         {onPin ? (
           <button
@@ -51,7 +91,9 @@ export default function NoteCard({ note, tags = [], onClick, onDelete, onPin }: 
 
       {/* Excerpt */}
       {excerpt && (
-        <p className="text-text-muted text-xs leading-relaxed line-clamp-3">{excerpt}</p>
+        <p className="text-text-muted text-xs leading-relaxed line-clamp-3">
+          <Highlight text={excerpt} query={searchQuery} />
+        </p>
       )}
 
       {/* Tags */}

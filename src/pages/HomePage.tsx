@@ -1,14 +1,18 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Plus, Pin } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
 import { useNotes } from '../hooks/useNotes'
+import { useTags } from '../hooks/useTags'
 import { useAuth } from '../context/AuthContext'
 import NoteCard from '../components/notes/NoteCard'
 
 export default function HomePage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { categories, createCategory } = useCategories()
-  const { notes } = useNotes()
+  const { notes, togglePin } = useNotes()
+  const { noteTagsMap } = useTags()
 
   const firstName = user?.email?.split('@')[0] ?? 'there'
   const hour = new Date().getHours()
@@ -138,7 +142,13 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {pinnedNotes.map(note => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard
+                key={note.id}
+                note={note}
+                tags={noteTagsMap[note.id] ?? []}
+                onClick={() => navigate(`/notes?edit=${note.id}`)}
+                onPin={() => togglePin(note.id, !note.is_pinned)}
+              />
             ))}
           </div>
         </section>
@@ -152,7 +162,13 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {recentNotes.map(note => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard
+                key={note.id}
+                note={note}
+                tags={noteTagsMap[note.id] ?? []}
+                onClick={() => navigate(`/notes?edit=${note.id}`)}
+                onPin={() => togglePin(note.id, !note.is_pinned)}
+              />
             ))}
           </div>
         )}

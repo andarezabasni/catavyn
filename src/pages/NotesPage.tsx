@@ -6,6 +6,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
 import NoteEditor from '../components/notes/NoteEditor'
 import NoteCard from '../components/notes/NoteCard'
+import SearchBar from '../components/ui/SearchBar'
 import type { Note } from '../hooks/useNotes'
 
 type ViewMode = 'grid' | 'list'
@@ -21,6 +22,7 @@ export default function NotesPage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
 
@@ -38,6 +40,13 @@ export default function NotesPage() {
       if (urlTagId) {
         const noteTags = noteTagsMap[n.id] ?? []
         if (!noteTags.some(t => t.id === urlTagId)) return false
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const inTitle = n.title.toLowerCase().includes(q)
+        const inContent = n.content.toLowerCase().includes(q)
+        const inTags = (noteTagsMap[n.id] ?? []).some(t => t.name.toLowerCase().includes(q))
+        if (!inTitle && !inContent && !inTags) return false
       }
       return true
     })
@@ -219,6 +228,13 @@ export default function NotesPage() {
         </div>
       </div>
 
+      {/* Search */}
+      <SearchBar
+        placeholder="Search notes…"
+        onSearch={setSearchQuery}
+        className="mb-4"
+      />
+
       {/* Category filter */}
       {categories.length > 0 && (
         <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -292,6 +308,7 @@ export default function NotesPage() {
               key={note.id}
               note={note}
               tags={noteTagsMap[note.id] ?? []}
+              searchQuery={searchQuery}
               onClick={() => openEdit(note)}
               onDelete={() => handleDelete(note)}
               onPin={() => togglePin(note.id, !note.is_pinned)}
