@@ -3,6 +3,7 @@ import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
 import NoteEditor from '../components/notes/NoteEditor'
+import NoteCard from '../components/notes/NoteCard'
 import type { Note } from '../hooks/useNotes'
 
 type ViewMode = 'grid' | 'list'
@@ -152,6 +153,7 @@ export default function NotesPage() {
             <NoteCard key={note.id} note={note} onClick={() => openEdit(note)} />
           ))}
         </div>
+
       ) : (
         <div className="flex flex-col gap-2">
           {filteredNotes.map(note => (
@@ -160,27 +162,6 @@ export default function NotesPage() {
         </div>
       )}
     </div>
-  )
-}
-
-function NoteCard({ note, onClick }: { note: Note; onClick: () => void }) {
-  const excerpt = note.content.trim().slice(0, 120)
-  const date = new Date(note.updated_at).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-
-  return (
-    <button
-      onClick={onClick}
-      className="text-left bg-bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow flex flex-col gap-1.5"
-    >
-      <div className="text-text-primary font-medium text-sm truncate">{note.title || 'Untitled'}</div>
-      {excerpt && (
-        <p className="text-text-muted text-xs leading-relaxed line-clamp-3">{excerpt}</p>
-      )}
-      <div className="text-text-muted text-xs mt-auto pt-1">{date}</div>
-    </button>
   )
 }
 

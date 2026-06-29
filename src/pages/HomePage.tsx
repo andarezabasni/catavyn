@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Plus, Pin } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
-import { useNotes, type Note } from '../hooks/useNotes'
+import { useNotes } from '../hooks/useNotes'
 import { useAuth } from '../context/AuthContext'
+import NoteCard from '../components/notes/NoteCard'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -137,7 +138,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {pinnedNotes.map(note => (
-              <NotePreviewCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} />
             ))}
           </div>
         </section>
@@ -151,7 +152,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {recentNotes.map(note => (
-              <NotePreviewCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} />
             ))}
           </div>
         )}
@@ -171,24 +172,6 @@ function CategoryCard({ category, noteCount }: { category: Category; noteCount: 
       <div className="text-text-muted text-xs mt-1">
         {noteCount} {noteCount === 1 ? 'note' : 'notes'}
       </div>
-    </div>
-  )
-}
-
-function NotePreviewCard({ note }: { note: Note }) {
-  const excerpt = note.content.trim().slice(0, 100)
-  const date = new Date(note.updated_at).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-
-  return (
-    <div className="bg-bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-1.5">
-      <div className="text-text-primary font-medium text-sm truncate">{note.title || 'Untitled'}</div>
-      {excerpt && (
-        <p className="text-text-muted text-xs leading-relaxed line-clamp-2">{excerpt}</p>
-      )}
-      <div className="text-text-muted text-xs mt-auto pt-1">{date}</div>
     </div>
   )
 }
