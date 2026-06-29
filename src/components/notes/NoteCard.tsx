@@ -113,7 +113,7 @@ export default function NoteCard({
             type="button"
             onClick={e => { e.stopPropagation(); onDelete() }}
             aria-label="Move to trash"
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             <Trash2 size={13} />
           </button>

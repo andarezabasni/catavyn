@@ -123,7 +123,7 @@ export default function TagsPage() {
                   type="button"
                   onClick={e => { e.stopPropagation(); void deleteTag(tag.id) }}
                   aria-label={`Delete tag ${tag.name}`}
-                  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50"
+                  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 size={13} />
                 </button>

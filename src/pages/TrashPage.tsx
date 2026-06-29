@@ -19,7 +19,7 @@ export default function TrashPage() {
         {notes.length > 0 && (
           <button
             onClick={emptyTrash}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-red-500 hover:border-red-300 transition-colors"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-red-500 hover:border-red-300 dark:hover:border-red-800 transition-colors"
           >
             Empty trash
           </button>
@@ -71,7 +71,7 @@ export default function TrashPage() {
                   </button>
                   <button
                     onClick={() => permanentlyDeleteNote(note.id)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium border border-border text-text-muted hover:border-red-300 hover:text-red-500 transition-colors"
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium border border-border text-text-muted hover:border-red-300 dark:hover:border-red-800 hover:text-red-500 transition-colors"
                   >
                     Delete
                   </button>

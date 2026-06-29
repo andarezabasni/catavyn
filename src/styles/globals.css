@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
+/* Class-based dark mode — .dark on <html> activates dark: utilities */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Backgrounds */
   --color-bg-page:       #E8E0D0;
@@ -38,6 +41,22 @@
 
   /* Base font size */
   --text-base: 14px;
+}
+
+/* Dark mode — token overrides, warm dark palette */
+.dark {
+  --color-bg-page:        #1C1917;
+  --color-bg-card:        #242220;
+  --color-bg-sidebar:     #161412;
+  --color-bg-task-panel:  #2D3D2D;
+  --color-text-primary:   #E8E0D0;
+  --color-text-secondary: #B5AFA8;
+  --color-text-muted:     #6B665F;
+  --color-border:         #3A3530;
+  --color-priority-high:  #4A3A10;
+  --color-priority-med:   #1A3A1A;
+  --color-priority-low:   #2E2A26;
+  color-scheme: dark;
 }
 
 /* Base resets */

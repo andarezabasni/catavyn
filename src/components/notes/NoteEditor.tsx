@@ -181,7 +181,7 @@ export default function NoteEditor({
             <button
               onClick={onDelete}
               type="button"
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               aria-label="Move to trash"
             >
               <Trash2 size={14} />

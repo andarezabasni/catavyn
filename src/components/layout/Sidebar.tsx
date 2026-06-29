@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router'
-import { Home, FileText, Tag, Pin, Trash2, LogOut } from 'lucide-react'
+import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 
 const NAV_ITEMS = [
   { to: '/',        icon: Home,     label: 'Home'   },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
+  const { isDark, toggleTheme } = useTheme()
 
   async function handleSignOut() {
     await signOut()
@@ -37,7 +39,7 @@ export default function Sidebar() {
                 `flex flex-col items-center gap-1 w-14 py-3 rounded-xl transition-colors ${
                   isActive
                     ? 'bg-accent-gold/15 text-accent-gold'
-                    : 'text-text-muted hover:text-text-secondary hover:bg-black/5'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-black/5 dark:hover:bg-white/5'
                 }`
               }
             >
@@ -48,8 +50,18 @@ export default function Sidebar() {
         </nav>
 
         <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="flex flex-col items-center gap-1 w-14 py-3 rounded-xl text-text-muted hover:text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 transition-colors mb-1"
+        >
+          {isDark ? <Sun size={20} strokeWidth={1.75} /> : <Moon size={20} strokeWidth={1.75} />}
+          <span className="text-[10px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
+        </button>
+
+        <button
           onClick={handleSignOut}
-          className="flex flex-col items-center gap-1 w-14 py-3 rounded-xl text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+          className="flex flex-col items-center gap-1 w-14 py-3 rounded-xl text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           aria-label="Sign out"
         >
           <LogOut size={20} strokeWidth={1.75} />
@@ -76,6 +88,16 @@ export default function Sidebar() {
             <span className="text-[10px] font-medium">{label}</span>
           </NavLink>
         ))}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-text-muted hover:text-text-secondary transition-colors"
+        >
+          {isDark ? <Sun size={20} strokeWidth={1.75} /> : <Moon size={20} strokeWidth={1.75} />}
+          <span className="text-[10px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
+        </button>
+
         <button
           onClick={handleSignOut}
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-text-muted hover:text-red-500 transition-colors"
