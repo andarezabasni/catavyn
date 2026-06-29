@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function RegisterPage() {
@@ -10,6 +11,7 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -19,13 +21,45 @@ export default function RegisterPage() {
       return
     }
     setLoading(true)
-    const { error } = await signUp(email, password)
+    const { error, needsConfirmation } = await signUp(email, password)
     setLoading(false)
     if (error) {
       setError(error)
+    } else if (needsConfirmation) {
+      setPendingConfirmation(true)
     } else {
       navigate('/')
     }
+  }
+
+  if (pendingConfirmation) {
+    return (
+      <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <h1 className="font-display text-4xl font-bold text-text-primary mb-8 tracking-wide">
+            CATAVYN
+          </h1>
+          <div className="bg-bg-card rounded-2xl border border-border p-8 shadow-sm">
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-accent-gold/15 flex items-center justify-center">
+                <Mail size={24} className="text-accent-gold" />
+              </div>
+            </div>
+            <h2 className="text-text-primary font-semibold text-lg mb-2">Check your email</h2>
+            <p className="text-text-secondary text-sm">
+              We sent a confirmation link to <span className="font-medium text-text-primary">{email}</span>.
+              Click it to activate your account.
+            </p>
+          </div>
+          <p className="text-text-muted text-sm mt-6">
+            Already confirmed?{' '}
+            <Link to="/login" className="text-accent-gold font-medium hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
