@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Plus, Pin, Bell, Clock, CheckSquare, FolderOpen, FileText } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
@@ -14,7 +14,7 @@ export default function HomePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { categories, createCategory } = useCategories()
-  const { notes, togglePin } = useNotes()
+  const { notes, loading: notesLoading, togglePin } = useNotes()
   const { noteTagsMap } = useTags()
   const { tasks: allTasks } = useTasks()
 
@@ -52,6 +52,13 @@ export default function HomePage() {
   const pinnedNotes = notes.filter(n => n.is_pinned)
   const recentNotes = notes.filter(n => !n.is_pinned).slice(0, 6)
 
+  const [syncedAt, setSyncedAt] = useState('')
+  useEffect(() => {
+    if (!notesLoading) {
+      setSyncedAt(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }))
+    }
+  }, [notesLoading])
+
   const [showCatForm, setShowCatForm] = useState(false)
   const [catName, setCatName] = useState('')
   const [catIcon, setCatIcon] = useState('📁')
@@ -78,7 +85,7 @@ export default function HomePage() {
   return (
     <>
       {/* Main scrollable content — shifts left of task panel on lg+ */}
-      <div className={`p-4 sm:p-6 transition-[padding] duration-300 ${panelOpen ? 'lg:pr-80' : ''}`}>
+      <div className={`animate-fade-up p-4 sm:p-6 transition-[padding] duration-300 ${panelOpen ? 'lg:pr-80' : ''}`}>
         <div className="max-w-4xl mx-auto">
 
           {/* Greeting + panel toggle */}
@@ -227,6 +234,18 @@ export default function HomePage() {
             )}
           </section>
 
+          {/* Status bar */}
+          {!notesLoading && (
+            <div className="mt-8 pt-3 border-t border-border/50">
+              <p className="text-text-muted text-[11px]">
+                {notes.length} {notes.length === 1 ? 'note' : 'notes'} total
+                {' · '}
+                {pinnedNotes.length} pinned
+                {syncedAt && <> · Last synced: {syncedAt}</>}
+              </p>
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -254,7 +273,7 @@ export default function HomePage() {
 function CategoryCard({ category, noteCount }: { category: Category; noteCount: number }) {
   return (
     <div
-      className="bg-bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-bg-card rounded-xl border border-border p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
       style={{ borderLeftColor: category.color, borderLeftWidth: '3px' }}
     >
       <div className="text-2xl mb-2 leading-none">{category.icon}</div>

@@ -13,7 +13,7 @@ export default function PinnedPage() {
   const pinnedNotes = notes.filter(n => n.is_pinned)
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="animate-fade-up p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Pin size={18} className="text-accent-gold" />
         <div>

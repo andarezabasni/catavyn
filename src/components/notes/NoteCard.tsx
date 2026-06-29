@@ -62,8 +62,8 @@ export default function NoteCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group text-left w-full bg-bg-card rounded-xl border border-border p-4 flex flex-col gap-1.5 transition-shadow ${
-        onClick ? 'hover:shadow-md cursor-pointer' : 'cursor-default'
+      className={`group text-left w-full bg-bg-card rounded-xl border border-border p-4 flex flex-col gap-1.5 transition-all duration-200 ${
+        onClick ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'cursor-default'
       }`}
     >
       {/* Title + pin */}

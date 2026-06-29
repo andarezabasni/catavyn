@@ -21,7 +21,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: TaskItemP
         type="button"
         onClick={onToggle}
         aria-label={task.is_completed ? 'Mark incomplete' : 'Mark complete'}
-        className={`mt-0.5 shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+        className={`mt-0.5 shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all active:scale-90 ${
           task.is_completed
             ? 'bg-accent-green border-accent-green'
             : 'border-white/40 hover:border-white/70 bg-transparent'

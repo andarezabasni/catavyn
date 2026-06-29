@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { toast } from '../lib/toast'
 import type { Database } from '../lib/database.types'
 
 export type Task = Database['public']['Tables']['tasks']['Row']
@@ -75,6 +76,7 @@ export function useTasks(date?: string) {
     if (error) {
       setTasks(prev => prev.filter(t => t.id !== tempId))
       setError(error.message)
+      toast.error('Failed to create task')
       return null
     }
 
@@ -95,6 +97,7 @@ export function useTasks(date?: string) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to update task')
       await fetchTasks()
     }
   }, [fetchTasks])
@@ -109,6 +112,7 @@ export function useTasks(date?: string) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to delete task')
       await fetchTasks()
     }
   }, [fetchTasks])

@@ -11,7 +11,7 @@ export default function TrashPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="animate-fade-up p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-text-primary font-semibold text-xl">Trash</h1>

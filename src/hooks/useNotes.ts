@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { toast } from '../lib/toast'
 import type { Database } from '../lib/database.types'
 
 export type Note = Database['public']['Tables']['notes']['Row']
@@ -76,6 +77,7 @@ export function useNotes(options: UseNotesOptions = {}) {
     if (error) {
       setNotes(prev => prev.filter(n => n.id !== tempId))
       setError(error.message)
+      toast.error('Failed to create note')
       return null
     }
 
@@ -97,6 +99,7 @@ export function useNotes(options: UseNotesOptions = {}) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to save note')
       await fetchNotes()
     }
   }, [fetchNotes])
@@ -114,6 +117,7 @@ export function useNotes(options: UseNotesOptions = {}) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to delete note')
       await fetchNotes()
     }
   }, [fetchNotes])
@@ -129,6 +133,7 @@ export function useNotes(options: UseNotesOptions = {}) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to restore note')
       await fetchNotes()
     }
   }, [fetchNotes])
@@ -144,6 +149,7 @@ export function useNotes(options: UseNotesOptions = {}) {
 
     if (error) {
       setError(error.message)
+      toast.error('Failed to permanently delete note')
       await fetchNotes()
     }
   }, [fetchNotes])
