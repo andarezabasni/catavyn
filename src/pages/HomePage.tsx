@@ -78,13 +78,13 @@ export default function HomePage() {
   return (
     <>
       {/* Main scrollable content — shifts left of task panel on lg+ */}
-      <div className={`p-6 transition-[padding] duration-300 ${panelOpen ? 'lg:pr-80' : ''}`}>
+      <div className={`p-4 sm:p-6 transition-[padding] duration-300 ${panelOpen ? 'lg:pr-80' : ''}`}>
         <div className="max-w-4xl mx-auto">
 
           {/* Greeting + panel toggle */}
-          <div className="mb-8 flex items-start justify-between gap-4">
+          <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-text-primary font-semibold text-2xl">
+              <h1 className="text-text-primary font-semibold text-xl sm:text-2xl">
                 {greeting}, {firstName}
               </h1>
               <p className="text-text-muted text-sm mt-1">{today}</p>
@@ -104,7 +104,7 @@ export default function HomePage() {
           </div>
 
           {/* Categories */}
-          <section className="mb-8">
+          <section className="mb-6 sm:mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-text-primary font-semibold text-base">Categories</h2>
               {!showCatForm && (
@@ -173,7 +173,7 @@ export default function HomePage() {
 
           {/* Reminders */}
           {upcomingTasks.length > 0 && (
-            <section className="mb-8">
+            <section className="mb-6 sm:mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Bell size={15} className="text-accent-gold" />
                 <h2 className="text-text-primary font-semibold text-base">Reminders</h2>
@@ -188,7 +188,7 @@ export default function HomePage() {
 
           {/* Pinned Notes */}
           {pinnedNotes.length > 0 && (
-            <section className="mb-8">
+            <section className="mb-6 sm:mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Pin size={15} className="text-accent-gold" />
                 <h2 className="text-text-primary font-semibold text-base">Pinned</h2>

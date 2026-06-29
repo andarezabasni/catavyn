@@ -146,7 +146,7 @@ export default function NoteEditor({
   return (
     <div className="flex flex-col min-h-screen">
       {/* Toolbar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-bg-page border-b border-border">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3 bg-bg-page border-b border-border">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm transition-colors"
@@ -199,7 +199,7 @@ export default function NoteEditor({
       </div>
 
       {/* Writing area */}
-      <div className="flex-1 px-6 py-8 max-w-3xl mx-auto w-full">
+      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8 max-w-3xl mx-auto w-full">
         <input
           ref={titleRef}
           type="text"
@@ -213,7 +213,7 @@ export default function NoteEditor({
           }}
           placeholder="Untitled"
           maxLength={200}
-          className="w-full bg-transparent text-text-primary font-semibold text-2xl placeholder:text-text-muted focus:outline-none mb-4"
+          className="w-full bg-transparent text-text-primary font-semibold text-xl sm:text-2xl placeholder:text-text-muted focus:outline-none mb-4"
         />
 
         {/* Category picker */}
