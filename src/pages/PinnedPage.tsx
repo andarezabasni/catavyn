@@ -3,6 +3,7 @@ import { Pin } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
 import NoteCard from '../components/notes/NoteCard'
+import { NoteCardSkeleton } from '../components/ui/Skeleton'
 
 export default function PinnedPage() {
   const navigate = useNavigate()
@@ -24,7 +25,9 @@ export default function PinnedPage() {
       </div>
 
       {loading ? (
-        <div className="text-text-muted text-sm">Loading…</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => <NoteCardSkeleton key={i} />)}
+        </div>
       ) : pinnedNotes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-12 text-center">
           <Pin size={24} className="text-text-muted mx-auto mb-3 opacity-50" />

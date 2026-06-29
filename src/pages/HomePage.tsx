@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus, Pin, Bell, Clock, CheckSquare } from 'lucide-react'
+import { Plus, Pin, Bell, Clock, CheckSquare, FolderOpen, FileText } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
 import { useNotes } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
@@ -157,7 +157,7 @@ export default function HomePage() {
             )}
 
             {categories.length === 0 ? (
-              <EmptyHint>No categories yet. Create one to organize your notes.</EmptyHint>
+              <EmptyHint icon={FolderOpen}>No categories yet. Create one to organize your notes.</EmptyHint>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {categories.map(cat => (
@@ -211,7 +211,7 @@ export default function HomePage() {
           <section>
             <h2 className="text-text-primary font-semibold text-base mb-4">Recent Notes</h2>
             {recentNotes.length === 0 ? (
-              <EmptyHint>No notes yet. Head to Notes to create your first one.</EmptyHint>
+              <EmptyHint icon={FileText}>No notes yet. Head to Notes to create your first one.</EmptyHint>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recentNotes.map(note => (
@@ -266,9 +266,10 @@ function CategoryCard({ category, noteCount }: { category: Category; noteCount: 
   )
 }
 
-function EmptyHint({ children }: { children: React.ReactNode }) {
+function EmptyHint({ icon: Icon, children }: { icon?: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-dashed border-border p-8 text-center">
+      {Icon && <Icon size={24} className="text-text-muted opacity-40 mx-auto mb-2" />}
       <p className="text-text-muted text-sm">{children}</p>
     </div>
   )

@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { LayoutGrid, List, Plus, RotateCcw, X } from 'lucide-react'
+import { LayoutGrid, List, Plus, RotateCcw, X, FileText } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
 import NoteEditor from '../components/notes/NoteEditor'
 import NoteCard from '../components/notes/NoteCard'
 import SearchBar from '../components/ui/SearchBar'
+import { NoteCardSkeleton, NoteListRowSkeleton } from '../components/ui/Skeleton'
+import EmptyState from '../components/ui/EmptyState'
 import type { Note } from '../hooks/useNotes'
 
 type ViewMode = 'grid' | 'list'
@@ -288,19 +290,22 @@ export default function NotesPage() {
 
       {/* Notes */}
       {loading ? (
-        <div className="text-text-muted text-sm">Loading…</div>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <NoteCardSkeleton key={i} />)}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 6 }).map((_, i) => <NoteListRowSkeleton key={i} />)}
+          </div>
+        )
       ) : filteredNotes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <p className="text-text-muted text-sm mb-3">
-            {categoryFilter || urlTagId ? 'No notes match this filter.' : 'No notes yet.'}
-          </p>
-          <button
-            onClick={openNew}
-            className="text-sm text-accent-gold font-medium hover:opacity-75 transition-opacity"
-          >
-            Create your first note →
-          </button>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={categoryFilter || urlTagId ? 'No notes match this filter.' : 'No notes yet.'}
+          description={categoryFilter || urlTagId ? 'Try a different filter or search term.' : 'Start capturing your thoughts and ideas.'}
+          action={!categoryFilter && !urlTagId ? { label: 'Create your first note', onClick: openNew } : undefined}
+        />
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredNotes.map(note => (

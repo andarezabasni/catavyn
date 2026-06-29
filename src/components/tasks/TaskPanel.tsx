@@ -4,6 +4,7 @@ import { useTasks } from '../../hooks/useTasks'
 import TaskItem from './TaskItem'
 import TaskForm from './TaskForm'
 import MiniCalendar from './MiniCalendar'
+import { TaskItemSkeleton } from '../ui/Skeleton'
 
 interface TaskPanelProps {
   onClose?: () => void
@@ -127,7 +128,9 @@ export default function TaskPanel({ onClose }: TaskPanelProps) {
         {/* Task list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 min-h-0">
           {loading ? (
-            <p className="text-white/40 text-xs text-center py-6">Loading…</p>
+            <div className="pt-2">
+              {Array.from({ length: 3 }).map((_, i) => <TaskItemSkeleton key={i} />)}
+            </div>
           ) : tasks.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-white/40 text-xs">No tasks for this day.</p>

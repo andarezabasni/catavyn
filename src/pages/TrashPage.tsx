@@ -1,4 +1,7 @@
+import { Trash2 } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
+import { NoteCardSkeleton } from '../components/ui/Skeleton'
+import EmptyState from '../components/ui/EmptyState'
 
 export default function TrashPage() {
   const { notes, loading, restoreNote, permanentlyDeleteNote } = useNotes({ deleted: true })
@@ -27,11 +30,15 @@ export default function TrashPage() {
       </div>
 
       {loading ? (
-        <div className="text-text-muted text-sm">Loading…</div>
-      ) : notes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <p className="text-text-muted text-sm">Trash is empty.</p>
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }).map((_, i) => <NoteCardSkeleton key={i} />)}
         </div>
+      ) : notes.length === 0 ? (
+        <EmptyState
+          icon={Trash2}
+          title="Trash is empty"
+          description="Deleted notes appear here and are removed after 30 days."
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {notes.map(note => {
