@@ -156,7 +156,7 @@ export default function NoteEditor({
           className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm transition-colors"
         >
           <ArrowLeft size={16} />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </button>
 
         <div className="flex items-center gap-3">
