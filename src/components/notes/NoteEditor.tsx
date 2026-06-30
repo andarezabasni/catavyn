@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus } from 'lucide-react'
+import { ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus, Lock, LockOpen } from 'lucide-react'
 import type { Category } from '../../hooks/useCategories'
 import type { Tag } from '../../hooks/useTags'
 
@@ -10,11 +10,13 @@ interface NoteEditorProps {
   categories?: Category[]
   noteTags?: Tag[]
   allTags?: Tag[]
+  pinHash?: string | null
   onSave: (title: string, content: string) => Promise<void>
   onBack: () => void
   onDelete?: () => void
   isPinned?: boolean
   onPin?: () => void
+  onLockToggle?: () => void
   onCategoryChange?: (categoryId: string | null) => void
   onTagAdd?: (tagId: string) => void
   onTagRemove?: (tagId: string) => void
@@ -28,8 +30,10 @@ export default function NoteEditor({
   categories = [],
   noteTags = [],
   allTags = [],
+  pinHash = null,
   isPinned = false,
   onPin,
+  onLockToggle,
   onSave,
   onBack,
   onDelete,
@@ -175,6 +179,21 @@ export default function NoteEditor({
             >
               <Pin size={14} />
               <span className="hidden sm:inline">{isPinned ? 'Pinned' : 'Pin'}</span>
+            </button>
+          )}
+          {onLockToggle && (
+            <button
+              type="button"
+              onClick={onLockToggle}
+              aria-label={pinHash ? 'Manage note lock' : 'Lock note'}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                pinHash
+                  ? 'text-accent-gold hover:opacity-75'
+                  : 'text-text-muted hover:text-accent-gold hover:bg-accent-gold/10'
+              }`}
+            >
+              {pinHash ? <Lock size={14} /> : <LockOpen size={14} />}
+              <span className="hidden sm:inline">{pinHash ? 'Locked' : 'Lock'}</span>
             </button>
           )}
           {onDelete && (

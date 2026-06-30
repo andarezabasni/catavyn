@@ -1,4 +1,4 @@
-import { Pin, Trash2 } from 'lucide-react'
+import { Pin, Trash2, Lock } from 'lucide-react'
 import type { Note } from '../../hooks/useNotes'
 import type { Tag } from '../../hooks/useTags'
 import TagBadge from '../tags/TagBadge'
@@ -89,12 +89,17 @@ export default function NoteCard({
         ) : null}
       </div>
 
-      {/* Excerpt */}
-      {excerpt && (
+      {/* Excerpt — hidden for locked notes */}
+      {note.pin_hash ? (
+        <p className="text-text-muted text-xs italic flex items-center gap-1">
+          <Lock size={10} />
+          Protected note
+        </p>
+      ) : excerpt ? (
         <p className="text-text-muted text-xs leading-relaxed line-clamp-3">
           <Highlight text={excerpt} query={searchQuery} />
         </p>
-      )}
+      ) : null}
 
       {/* Tags */}
       {tags.length > 0 && (

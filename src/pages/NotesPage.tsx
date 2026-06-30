@@ -6,6 +6,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
 import NoteEditor from '../components/notes/NoteEditor'
 import NoteCard from '../components/notes/NoteCard'
+import NotePinModal from '../components/notes/NotePinModal'
 import SearchBar from '../components/ui/SearchBar'
 import { NoteCardSkeleton, NoteListRowSkeleton } from '../components/ui/Skeleton'
 import EmptyState from '../components/ui/EmptyState'
@@ -30,9 +31,11 @@ export default function NotesPage() {
 
   const [undoNote, setUndoNote] = useState<{ id: string; title: string } | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Tracks category + tags for new notes before first save
   const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
   const [pendingTagIds, setPendingTagIds] = useState<string[]>([])
+
+  const [unlockedNoteIds, setUnlockedNoteIds] = useState<Set<string>>(new Set())
+  const [pinModal, setPinModal] = useState<{ note: Note; view: 'unlock' | 'remove' | 'set' } | null>(null)
 
   const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
 
@@ -63,15 +66,19 @@ export default function NotesPage() {
     if (!editParam || loading || editorOpen) return
     const note = notes.find(n => n.id === editParam)
     if (!note) return
-    setEditingNoteId(note.id)
-    setPendingTagIds([])
-    setEditorOpen(true)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       next.delete('edit')
       return next
     }, { replace: true })
-  }, [editParam, loading, notes, editorOpen, setSearchParams])
+    if (note.pin_hash && !unlockedNoteIds.has(note.id)) {
+      setPinModal({ note, view: 'unlock' })
+      return
+    }
+    setEditingNoteId(note.id)
+    setPendingTagIds([])
+    setEditorOpen(true)
+  }, [editParam, loading, notes, editorOpen, setSearchParams, unlockedNoteIds])
 
   function openNew() {
     setEditingNoteId(null)
@@ -81,9 +88,35 @@ export default function NotesPage() {
   }
 
   function openEdit(note: Note) {
+    if (note.pin_hash && !unlockedNoteIds.has(note.id)) {
+      setPinModal({ note, view: 'unlock' })
+      return
+    }
     setEditingNoteId(note.id)
     setPendingTagIds([])
     setEditorOpen(true)
+  }
+
+  function handlePinUnlocked() {
+    if (!pinModal) return
+    const { note } = pinModal
+    setUnlockedNoteIds(prev => new Set(prev).add(note.id))
+    setPinModal(null)
+    setEditingNoteId(note.id)
+    setPendingTagIds([])
+    setEditorOpen(true)
+  }
+
+  function handlePinChanged(newHash: string | null) {
+    if (!pinModal) return
+    void updateNote(pinModal.note.id, { pin_hash: newHash })
+    if (!newHash) setUnlockedNoteIds(prev => new Set(prev).add(pinModal.note.id))
+    setPinModal(null)
+  }
+
+  function handleLockToggle() {
+    if (!editingNote) return
+    setPinModal({ note: editingNote, view: editingNote.pin_hash ? 'remove' : 'set' })
   }
 
   function closeEditor() {
@@ -161,32 +194,29 @@ export default function NotesPage() {
     setUndoNote(null)
   }
 
-  if (editorOpen) {
-    return (
-      <>
-        <NoteEditor
-          initialTitle={editingNote?.title ?? ''}
-          initialContent={editingNote?.content ?? ''}
-          categoryId={editingNote?.category_id ?? pendingCategoryId}
-          categories={categories}
-          noteTags={editingNoteId ? (noteTagsMap[editingNoteId] ?? []) : tags.filter(t => pendingTagIds.includes(t.id))}
-          allTags={tags}
-          isPinned={editingNote?.is_pinned ?? false}
-          onPin={editingNote ? () => togglePin(editingNote.id, !editingNote.is_pinned) : undefined}
-          onSave={handleSave}
-          onBack={closeEditor}
-          onDelete={editingNote ? () => handleDelete(editingNote) : undefined}
-          onCategoryChange={handleCategoryChange}
-          onTagAdd={handleTagAdd}
-          onTagRemove={handleTagRemove}
-          onTagCreate={handleTagCreate}
-        />
-        {undoNote && <UndoToast title={undoNote.title} onUndo={handleUndo} />}
-      </>
-    )
-  }
-
   return (
+    <>
+    {editorOpen ? (
+      <NoteEditor
+        initialTitle={editingNote?.title ?? ''}
+        initialContent={editingNote?.content ?? ''}
+        categoryId={editingNote?.category_id ?? pendingCategoryId}
+        categories={categories}
+        noteTags={editingNoteId ? (noteTagsMap[editingNoteId] ?? []) : tags.filter(t => pendingTagIds.includes(t.id))}
+        allTags={tags}
+        isPinned={editingNote?.is_pinned ?? false}
+        pinHash={editingNote?.pin_hash ?? null}
+        onPin={editingNote ? () => togglePin(editingNote.id, !editingNote.is_pinned) : undefined}
+        onLockToggle={editingNoteId ? handleLockToggle : undefined}
+        onSave={handleSave}
+        onBack={closeEditor}
+        onDelete={editingNote ? () => handleDelete(editingNote) : undefined}
+        onCategoryChange={handleCategoryChange}
+        onTagAdd={handleTagAdd}
+        onTagRemove={handleTagRemove}
+        onTagCreate={handleTagCreate}
+      />
+    ) : (
     <div className="animate-fade-up p-4 sm:p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -333,8 +363,20 @@ export default function NotesPage() {
         </div>
       )}
 
-      {undoNote && <UndoToast title={undoNote.title} onUndo={handleUndo} />}
     </div>
+    )}
+    {undoNote && <UndoToast title={undoNote.title} onUndo={handleUndo} />}
+    {pinModal && (
+      <NotePinModal
+        noteTitle={pinModal.note.title}
+        pinHash={pinModal.note.pin_hash}
+        initialView={pinModal.view}
+        onUnlocked={handlePinUnlocked}
+        onPinChanged={handlePinChanged}
+        onClose={() => setPinModal(null)}
+      />
+    )}
+    </>
   )
 }
 

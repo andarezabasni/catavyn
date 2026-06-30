@@ -49,6 +49,7 @@ export interface Database {
           title: string
           content: string
           is_pinned: boolean
+          pin_hash: string | null
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -60,6 +61,7 @@ export interface Database {
           title?: string
           content?: string
           is_pinned?: boolean
+          pin_hash?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -71,6 +73,7 @@ export interface Database {
           title?: string
           content?: string
           is_pinned?: boolean
+          pin_hash?: string | null
           updated_at?: string
           deleted_at?: string | null
         }

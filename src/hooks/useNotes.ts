@@ -65,6 +65,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       updated_at: new Date().toISOString(),
       category_id: null,
       ...payload,
+      pin_hash: payload.pin_hash ?? null,
     }
     if (!options.deleted) setNotes(prev => [optimistic, ...prev])
 
