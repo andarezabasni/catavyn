@@ -39,6 +39,7 @@ export interface Database {
           position?: number
           updated_at?: string
         }
+        Relationships: []
       }
       notes: {
         Row: {
@@ -73,6 +74,7 @@ export interface Database {
           updated_at?: string
           deleted_at?: string | null
         }
+        Relationships: []
       }
       tags: {
         Row: {
@@ -95,6 +97,7 @@ export interface Database {
           name?: string
           color?: string
         }
+        Relationships: []
       }
       note_tags: {
         Row: {
@@ -109,6 +112,7 @@ export interface Database {
           note_id?: string
           tag_id?: string
         }
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -149,10 +153,12 @@ export interface Database {
           position?: number
           updated_at?: string
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
