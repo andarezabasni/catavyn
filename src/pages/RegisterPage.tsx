@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import loginLogo from '../assets/login_page_logo.png'
 
 export default function RegisterPage() {
   const { signUp } = useAuth()
@@ -36,9 +37,9 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center">
-          <h1 className="font-display text-4xl font-bold text-text-primary mb-8 tracking-wide">
-            CATAVYN
-          </h1>
+          <div className="flex justify-center mb-8">
+            <img src={loginLogo} alt="Catavyn" className="w-72" />
+          </div>
           <div className="bg-bg-card rounded-2xl border border-border p-8 shadow-sm">
             <div className="flex justify-center mb-4">
               <div className="w-12 h-12 rounded-full bg-accent-gold/15 flex items-center justify-center">
@@ -65,12 +66,9 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-center font-display text-4xl font-bold text-text-primary mb-2 tracking-wide">
-          CATAVYN
-        </h1>
-        <p className="text-center text-text-muted text-sm mb-8">
-          Your notes, your way.
-        </p>
+        <div className="flex justify-center mb-8">
+          <img src={loginLogo} alt="Catavyn" className="w-72" />
+        </div>
 
         <div className="bg-bg-card rounded-2xl border border-border p-8 shadow-sm">
           <h2 className="text-text-primary font-semibold text-lg mb-6">Create account</h2>

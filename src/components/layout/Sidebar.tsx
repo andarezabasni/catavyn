@@ -4,6 +4,7 @@ import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun, Coffee } from 'luc
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import SupportModal from '../ui/SupportModal'
+import appLogo from '../../assets/logo.png'
 
 const NAV_ITEMS = [
   { to: '/',        icon: Home,     label: 'Home'   },
@@ -28,9 +29,7 @@ export default function Sidebar() {
     <>
       {/* Desktop sidebar — fixed left strip */}
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-20 flex-col items-center bg-bg-sidebar border-r border-border py-6 z-10">
-        <span className="font-display font-bold text-text-primary text-xs tracking-widest mb-8 rotate-0">
-          C
-        </span>
+        <img src={appLogo} alt="Catavyn" className="w-10 h-10 mb-8 object-contain" />
 
         <nav className="flex flex-col items-center gap-1 flex-1">
           {NAV_ITEMS.map(({ to, icon: Icon, label }) => (

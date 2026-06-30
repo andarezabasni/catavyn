@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../context/AuthContext'
+import loginLogo from '../assets/login_page_logo.png'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -26,12 +27,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-center font-display text-4xl font-bold text-text-primary mb-2 tracking-wide">
-          CATAVYN
-        </h1>
-        <p className="text-center text-text-muted text-sm mb-8">
-          Your notes, your way.
-        </p>
+        <div className="flex justify-center mb-8">
+          <img src={loginLogo} alt="Catavyn" className="w-72" />
+        </div>
 
         <div className="bg-bg-card rounded-2xl border border-border p-8 shadow-sm">
           <h2 className="text-text-primary font-semibold text-lg mb-6">Sign in</h2>
