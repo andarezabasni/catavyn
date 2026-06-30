@@ -58,11 +58,13 @@ export default function TrashPage() {
                   <div className="text-text-primary font-medium text-sm truncate">
                     {note.title || 'Untitled'}
                   </div>
-                  {note.content.trim() && (
+                  {note.pin_hash ? (
+                    <div className="text-text-muted text-xs mt-0.5 italic">Protected note</div>
+                  ) : note.content.trim() ? (
                     <div className="text-text-muted text-xs truncate mt-0.5">
                       {note.content.trim().slice(0, 80)}
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="text-text-muted text-xs shrink-0 hidden sm:block">
