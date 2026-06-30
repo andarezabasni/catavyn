@@ -6,6 +6,21 @@ A note-taking and daily task app. Free, open source, works on web and desktop.
 
 ---
 
+![Dashboard](public/screenshot/1.png)
+
+<table>
+  <tr>
+    <td><img src="public/screenshot/5.png" alt="Notes" /></td>
+    <td><img src="public/screenshot/4.png" alt="Dark mode" /></td>
+  </tr>
+  <tr>
+    <td><img src="public/screenshot/3.png" alt="PIN lock" /></td>
+    <td><img src="public/screenshot/2.png" alt="Home workspace" /></td>
+  </tr>
+</table>
+
+---
+
 ## Features
 
 - Notes with categories, tags, and pin support
