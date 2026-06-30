@@ -1,32 +1,58 @@
-# React + TypeScript + Vite
+# Catavyn
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A note-taking and daily task app. Free, open source, works on web and desktop.
 
-Currently, two official plugins are available:
+**[catavyn.vercel.app](https://catavyn.vercel.app)** · [Download for Windows](https://github.com/andarezabasni/catavyn/releases/tag/v0.1.0)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Notes with categories, tags, and pin support
+- Lock individual notes with a PIN
+- Daily task list — priority levels, due dates, mini calendar
+- Full-text search across titles, content, and tags
+- Trash with 30-day soft delete
+- Dark mode
+- Web + desktop app (Windows)
 
-## Expanding the Oxlint configuration
+## Stack
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- React 19 + Vite + TypeScript
+- Tailwind CSS v4
+- Supabase (auth + database)
+- Tauri v2 (desktop)
+- Vercel (web deploy)
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Running locally
+
+You'll need Node 18+ and a Supabase project.
+
+```bash
+git clone https://github.com/andarezabasni/catavyn.git
+cd catavyn
+npm install
+cp .env.example .env.local
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Fill in your Supabase URL and anon key in `.env.local`, then run the SQL files in `supabase/migrations/` using the Supabase SQL Editor (run them in order).
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173`.
+
+## Desktop build
+
+Download the Windows installer from [Releases](https://github.com/andarezabasni/catavyn/releases).
+
+To build from source, you'll also need [Rust](https://rustup.rs/):
+
+```bash
+npm run tauri build
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE)
