@@ -81,3 +81,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Desktop-native feel: no accidental text selection on UI chrome */
+button, nav, aside, label {
+  user-select: none;
+}
+
+/* Always allow selection inside content/input areas */
+input, textarea, [contenteditable] {
+  user-select: text;
+}

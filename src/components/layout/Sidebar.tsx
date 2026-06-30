@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router'
-import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun } from 'lucide-react'
+import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun, Coffee } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import SupportModal from '../ui/SupportModal'
 
 const NAV_ITEMS = [
   { to: '/',        icon: Home,     label: 'Home'   },
@@ -15,6 +17,7 @@ export default function Sidebar() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
+  const [showSupport, setShowSupport] = useState(false)
 
   async function handleSignOut() {
     await signOut()
@@ -48,6 +51,16 @@ export default function Sidebar() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          type="button"
+          onClick={() => setShowSupport(true)}
+          aria-label="Support Catavyn"
+          className="flex flex-col items-center gap-1 w-14 py-3 rounded-xl text-text-muted hover:text-accent-gold hover:bg-accent-gold/10 transition-colors mb-1"
+        >
+          <Coffee size={20} strokeWidth={1.75} />
+          <span className="text-[10px] font-medium">Support</span>
+        </button>
 
         <button
           type="button"
@@ -99,6 +112,16 @@ export default function Sidebar() {
         </button>
 
         <button
+          type="button"
+          onClick={() => setShowSupport(true)}
+          aria-label="Support Catavyn"
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-text-muted hover:text-accent-gold transition-colors"
+        >
+          <Coffee size={20} strokeWidth={1.75} />
+          <span className="text-[10px] font-medium">Support</span>
+        </button>
+
+        <button
           onClick={handleSignOut}
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-text-muted hover:text-red-500 transition-colors"
           aria-label="Sign out"
@@ -107,6 +130,8 @@ export default function Sidebar() {
           <span className="text-[10px] font-medium">Out</span>
         </button>
       </nav>
+
+      {showSupport && <SupportModal onClose={() => setShowSupport(false)} />}
     </>
   )
 }

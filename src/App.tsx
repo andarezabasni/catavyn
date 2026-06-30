@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -10,6 +11,8 @@ import NotesPage from './pages/NotesPage'
 import TagsPage from './pages/TagsPage'
 import PinnedPage from './pages/PinnedPage'
 import TrashPage from './pages/TrashPage'
+import { useDesktopShortcuts } from './hooks/useDesktopShortcuts'
+import { isTauri } from './lib/tauri'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -26,6 +29,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  useDesktopShortcuts()
+
+  useEffect(() => {
+    if (!isTauri()) return
+    const block = (e: MouseEvent) => e.preventDefault()
+    document.addEventListener('contextmenu', block)
+    return () => document.removeEventListener('contextmenu', block)
+  }, [])
+
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
