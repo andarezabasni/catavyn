@@ -20,7 +20,7 @@ type ViewMode = 'grid' | 'list'
 // Wrapper so useNotes({ parentId }) can be called as a hook (rules of hooks)
 function EditorWithSubNotes(props: React.ComponentProps<typeof NoteEditor> & { noteId: string }) {
   const { noteId, ...editorProps } = props
-  const { notes: subNotes, createNote } = useNotes({ parentId: noteId })
+  const { notes: subNotes, createNote } = useNotes({ parentId: noteId, includeShared: true })
   return (
     <NoteEditor
       {...editorProps}
