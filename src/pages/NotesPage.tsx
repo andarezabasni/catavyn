@@ -56,10 +56,16 @@ export default function NotesPage() {
 
   const [unlockedNoteIds, setUnlockedNoteIds] = useState<Set<string>>(new Set())
   const [pinModal, setPinModal] = useState<{ note: Note; view: 'unlock' | 'remove' | 'set' } | null>(null)
+  // Stores the full sub-note data when navigating into a sub-note, since sub-notes
+  // are not in the root-only `notes` array and can't be found via notes.find()
+  const [openedSubNote, setOpenedSubNote] = useState<Note | null>(null)
 
-  const editingNote = editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null
   const isInSubNote = editorStack.length > 0
   const currentParentNote = editorStack[editorStack.length - 1] ?? null
+  // When in a sub-note, use openedSubNote data; otherwise find from root notes list
+  const editingNote = isInSubNote
+    ? openedSubNote
+    : (editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null)
 
   // Sub-note counts fetched per card — done inline via a helper map built from noteTagsMap
   // (actual sub-note counts require a separate query; we use a simple approach below)
@@ -126,12 +132,14 @@ export default function NotesPage() {
   function openSubNote(parentNote: Note, subNote: Note) {
     setEditorStack(prev => [...prev, parentNote])
     setEditingNoteId(subNote.id)
+    setOpenedSubNote(subNote)
   }
 
   function closeEditor() {
     setEditorOpen(false)
     setEditingNoteId(null)
     setEditorStack([])
+    setOpenedSubNote(null)
   }
 
   function handleBack() {
@@ -140,6 +148,7 @@ export default function NotesPage() {
       const parent = editorStack[editorStack.length - 1]
       setEditorStack(prev => prev.slice(0, -1))
       setEditingNoteId(parent.id)
+      setOpenedSubNote(null)
     } else {
       closeEditor()
     }
