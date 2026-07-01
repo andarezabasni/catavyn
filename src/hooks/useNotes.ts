@@ -10,8 +10,9 @@ type NoteUpdate = Database['public']['Tables']['notes']['Update']
 
 interface UseNotesOptions {
   deleted?: boolean
-  parentId?: string   // fetch sub-notes of this note
-  rootOnly?: boolean  // fetch only root notes (parent_id IS NULL)
+  parentId?: string    // fetch sub-notes of this note
+  rootOnly?: boolean   // fetch only root notes (parent_id IS NULL)
+  includeShared?: boolean // also return notes shared with user (not just own)
 }
 
 export function useNotes(options: UseNotesOptions = {}) {
@@ -25,11 +26,16 @@ export function useNotes(options: UseNotesOptions = {}) {
     setLoading(true)
     setError(null)
 
+    // When includeShared is true, omit the user_id filter and let RLS return
+    // both own notes and notes where the user is a collaborator
     let query = supabase
       .from('notes')
       .select('*')
-      .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
+
+    if (!options.includeShared) {
+      query = query.eq('user_id', user.id)
+    }
 
     if (options.deleted) {
       query = query.not('deleted_at', 'is', null)
@@ -51,7 +57,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       setNotes(data ?? [])
     }
     setLoading(false)
-  }, [user, options.deleted, options.parentId, options.rootOnly])
+  }, [user, options.deleted, options.parentId, options.rootOnly, options.includeShared])
 
   useEffect(() => {
     fetchNotes()

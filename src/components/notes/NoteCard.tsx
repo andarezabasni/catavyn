@@ -1,4 +1,4 @@
-import { Pin, Trash2, Lock, FileText } from 'lucide-react'
+import { Pin, Trash2, Lock, FileText, Users } from 'lucide-react'
 import type { Note } from '../../hooks/useNotes'
 import type { Tag } from '../../hooks/useTags'
 import TagBadge from '../tags/TagBadge'
@@ -8,6 +8,7 @@ interface NoteCardProps {
   tags?: Tag[]
   searchQuery?: string
   subNoteCount?: number
+  isShared?: boolean
   onClick?: () => void
   onDelete?: () => void
   onPin?: () => void
@@ -54,6 +55,7 @@ export default function NoteCard({
   tags = [],
   searchQuery = '',
   subNoteCount = 0,
+  isShared = false,
   onClick,
   onDelete,
   onPin,
@@ -74,9 +76,17 @@ export default function NoteCard({
     >
       {/* Title + pin */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-text-primary font-medium text-sm truncate flex-1">
-          <Highlight text={note.title || 'Untitled'} query={searchQuery} />
-        </span>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <span className="text-text-primary font-medium text-sm truncate">
+            <Highlight text={note.title || 'Untitled'} query={searchQuery} />
+          </span>
+          {isShared && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-text-muted">
+              <Users size={10} />
+              Shared with you
+            </span>
+          )}
+        </div>
         {onPin ? (
           <button
             type="button"

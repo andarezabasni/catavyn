@@ -35,7 +35,7 @@ function EditorWithSubNotes(props: React.ComponentProps<typeof NoteEditor> & { n
 
 export default function NotesPage() {
   const { user } = useAuth()
-  const { notes, loading, createNote, updateNote, deleteNote, restoreNote, togglePin } = useNotes({ rootOnly: true })
+  const { notes, loading, createNote, updateNote, deleteNote, restoreNote, togglePin } = useNotes({ rootOnly: true, includeShared: true })
   const { categories } = useCategories()
   const { tags, noteTagsMap, createTag, attachTag, detachTag } = useTags()
 
@@ -474,9 +474,10 @@ export default function NotesPage() {
               note={note}
               tags={noteTagsMap[note.id] ?? []}
               searchQuery={searchQuery}
+              isShared={note.user_id !== user?.id}
               onClick={() => openEdit(note)}
-              onDelete={() => handleDelete(note)}
-              onPin={() => togglePin(note.id, !note.is_pinned)}
+              onDelete={note.user_id === user?.id ? () => handleDelete(note) : undefined}
+              onPin={note.user_id === user?.id ? () => togglePin(note.id, !note.is_pinned) : undefined}
             />
           ))}
         </div>
