@@ -10,6 +10,8 @@ type NoteUpdate = Database['public']['Tables']['notes']['Update']
 
 interface UseNotesOptions {
   deleted?: boolean
+  parentId?: string   // fetch sub-notes of this note
+  rootOnly?: boolean  // fetch only root notes (parent_id IS NULL)
 }
 
 export function useNotes(options: UseNotesOptions = {}) {
@@ -23,15 +25,25 @@ export function useNotes(options: UseNotesOptions = {}) {
     setLoading(true)
     setError(null)
 
-    const query = supabase
+    let query = supabase
       .from('notes')
       .select('*')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
-    const { data, error } = options.deleted
-      ? await query.not('deleted_at', 'is', null)
-      : await query.is('deleted_at', null)
+    if (options.deleted) {
+      query = query.not('deleted_at', 'is', null)
+    } else {
+      query = query.is('deleted_at', null)
+    }
+
+    if (options.parentId !== undefined) {
+      query = query.eq('parent_id', options.parentId)
+    } else if (options.rootOnly) {
+      query = query.is('parent_id', null)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       setError(error.message)
@@ -39,7 +51,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       setNotes(data ?? [])
     }
     setLoading(false)
-  }, [user, options.deleted])
+  }, [user, options.deleted, options.parentId, options.rootOnly])
 
   useEffect(() => {
     fetchNotes()
@@ -55,7 +67,6 @@ export function useNotes(options: UseNotesOptions = {}) {
       ...data,
     }
 
-    // Optimistic insert
     const tempId = `temp-${Date.now()}`
     const optimistic: Note = {
       id: tempId,
@@ -66,6 +77,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       category_id: null,
       ...payload,
       pin_hash: payload.pin_hash ?? null,
+      parent_id: (payload.parent_id ?? null) as string | null,
     }
     if (!options.deleted) setNotes(prev => [optimistic, ...prev])
 
@@ -90,7 +102,6 @@ export function useNotes(options: UseNotesOptions = {}) {
     const now = new Date().toISOString()
     const patch = { ...data, updated_at: now }
 
-    // Optimistic update
     setNotes(prev => prev.map(n => n.id === id ? { ...n, ...patch } : n))
 
     const { error } = await supabase
@@ -108,7 +119,6 @@ export function useNotes(options: UseNotesOptions = {}) {
   const deleteNote = useCallback(async (id: string) => {
     const now = new Date().toISOString()
 
-    // Optimistic remove from active list
     setNotes(prev => prev.filter(n => n.id !== id))
 
     const { error } = await supabase
@@ -124,7 +134,6 @@ export function useNotes(options: UseNotesOptions = {}) {
   }, [fetchNotes])
 
   const restoreNote = useCallback(async (id: string) => {
-    // Optimistic remove from trash list
     setNotes(prev => prev.filter(n => n.id !== id))
 
     const { error } = await supabase
@@ -140,7 +149,6 @@ export function useNotes(options: UseNotesOptions = {}) {
   }, [fetchNotes])
 
   const permanentlyDeleteNote = useCallback(async (id: string) => {
-    // Optimistic remove
     setNotes(prev => prev.filter(n => n.id !== id))
 
     const { error } = await supabase

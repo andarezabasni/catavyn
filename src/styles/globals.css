@@ -90,3 +90,92 @@ button, nav, aside, label {
 input, textarea, [contenteditable] {
   user-select: text;
 }
+
+/* Tiptap rich text editor */
+.tiptap-editor .ProseMirror {
+  outline: none;
+  min-height: 50vh;
+}
+
+.tiptap-editor .ProseMirror p {
+  margin: 0 0 0.5em;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 1em 0 0.4em;
+  font-family: var(--font-display);
+}
+
+.tiptap-editor .ProseMirror h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0.9em 0 0.35em;
+}
+
+.tiptap-editor .ProseMirror strong {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.tiptap-editor .ProseMirror ul { list-style-type: disc; }
+.tiptap-editor .ProseMirror ol { list-style-type: decimal; }
+.tiptap-editor .ProseMirror li { margin: 0.15em 0; }
+
+/* Task list / checklist */
+.tiptap-editor .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.2em;
+  user-select: none;
+}
+
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  accent-color: var(--color-accent-gold);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* Placeholder */
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: "Start writing\2026";
+  color: var(--color-text-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

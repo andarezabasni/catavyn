@@ -1,7 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus, Lock, LockOpen } from 'lucide-react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import {
+  ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus,
+  Lock, LockOpen, Bold, Heading1, Heading2, List, ListOrdered,
+  CheckSquare, FileText, ChevronRight,
+} from 'lucide-react'
 import type { Category } from '../../hooks/useCategories'
 import type { Tag } from '../../hooks/useTags'
+import type { Note } from '../../hooks/useNotes'
 
 interface NoteEditorProps {
   initialTitle?: string
@@ -11,16 +20,20 @@ interface NoteEditorProps {
   noteTags?: Tag[]
   allTags?: Tag[]
   pinHash?: string | null
-  onSave: (title: string, content: string) => Promise<void>
-  onBack: () => void
-  onDelete?: () => void
   isPinned?: boolean
   onPin?: () => void
   onLockToggle?: () => void
+  onSave: (title: string, content: string) => Promise<void>
+  onBack: () => void
+  onDelete?: () => void
   onCategoryChange?: (categoryId: string | null) => void
   onTagAdd?: (tagId: string) => void
   onTagRemove?: (tagId: string) => void
   onTagCreate?: (name: string) => Promise<Tag | null>
+  // Sub-notes
+  subNotes?: Note[]
+  onNewSubNote?: () => void
+  onOpenSubNote?: (note: Note) => void
 }
 
 export default function NoteEditor({
@@ -41,23 +54,23 @@ export default function NoteEditor({
   onTagAdd,
   onTagRemove,
   onTagCreate,
+  subNotes = [],
+  onNewSubNote,
+  onOpenSubNote,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle)
-  const [content, setContent] = useState(initialContent)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [catOpen, setCatOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
 
   const titleRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
   const tagDropdownRef = useRef<HTMLDivElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
   const didFocus = useRef(false)
 
   const currentCategory = categories.find(c => c.id === categoryId) ?? null
-
   const noteTagIds = new Set(noteTags.map(t => t.id))
   const filteredAvailableTags = allTags.filter(
     t => !noteTagIds.has(t.id) && t.name.toLowerCase().includes(tagSearch.toLowerCase())
@@ -67,14 +80,23 @@ export default function NoteEditor({
     !allTags.some(t => t.name.toLowerCase() === tagSearch.trim().toLowerCase()) &&
     !!onTagCreate
 
-  function resize() {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
-  }
-
-  useEffect(() => { resize() }, [content])
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2] },
+        bulletList: { keepMarks: true },
+        orderedList: { keepMarks: true },
+      }),
+      TaskList,
+      TaskItem.configure({ nested: false }),
+    ],
+    content: initialContent || '',
+    editorProps: {
+      attributes: {
+        class: 'prose-editor focus:outline-none',
+      },
+    },
+  })
 
   useEffect(() => {
     if (didFocus.current) return
@@ -82,9 +104,9 @@ export default function NoteEditor({
     if (!initialTitle) {
       titleRef.current?.focus()
     } else {
-      textareaRef.current?.focus()
+      editor?.commands.focus('end')
     }
-  }, [initialTitle])
+  }, [initialTitle, editor])
 
   useEffect(() => {
     if (!catOpen) return
@@ -111,12 +133,13 @@ export default function NoteEditor({
   }, [tagOpen])
 
   const save = useCallback(async () => {
-    if (status === 'saving') return
+    if (status === 'saving' || !editor) return
     setStatus('saving')
-    await onSave(title.trim() || 'Untitled', content)
+    const html = editor.getHTML()
+    await onSave(title.trim() || 'Untitled', html)
     setStatus('saved')
     setTimeout(() => setStatus('idle'), 2000)
-  }, [status, onSave, title, content])
+  }, [status, onSave, title, editor])
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -147,6 +170,10 @@ export default function NoteEditor({
     setTagOpen(false)
   }
 
+  const isH1 = editor?.isActive('heading', { level: 1 }) ?? false
+  const isH2 = editor?.isActive('heading', { level: 2 }) ?? false
+  const textStyleLabel = isH1 ? 'Heading' : isH2 ? 'Subtitle' : 'Normal'
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Toolbar */}
@@ -159,7 +186,7 @@ export default function NoteEditor({
           <span className="hidden sm:inline">Back</span>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {status === 'saved' && (
             <span className="flex items-center gap-1 text-xs text-text-muted">
               <Check size={12} />
@@ -171,7 +198,7 @@ export default function NoteEditor({
               type="button"
               onClick={onPin}
               aria-label={isPinned ? 'Unpin note' : 'Pin note'}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+              className={`flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-1.5 text-sm transition-colors ${
                 isPinned
                   ? 'text-accent-gold hover:opacity-75'
                   : 'text-text-muted hover:text-accent-gold hover:bg-accent-gold/10'
@@ -186,7 +213,7 @@ export default function NoteEditor({
               type="button"
               onClick={onLockToggle}
               aria-label={pinHash ? 'Manage note lock' : 'Lock note'}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+              className={`flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-1.5 text-sm transition-colors ${
                 pinHash
                   ? 'text-accent-gold hover:opacity-75'
                   : 'text-text-muted hover:text-accent-gold hover:bg-accent-gold/10'
@@ -200,7 +227,7 @@ export default function NoteEditor({
             <button
               onClick={onDelete}
               type="button"
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-1.5 text-sm text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               aria-label="Move to trash"
             >
               <Trash2 size={14} />
@@ -227,7 +254,7 @@ export default function NoteEditor({
           onKeyDown={e => {
             if (e.key === 'Enter') {
               e.preventDefault()
-              textareaRef.current?.focus()
+              editor?.commands.focus('start')
             }
           }}
           placeholder="Untitled"
@@ -389,20 +416,169 @@ export default function NoteEditor({
           </div>
         )}
 
-        <div className="border-t border-border mb-6" />
+        <div className="border-t border-border mb-4" />
 
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={e => {
-            setContent(e.target.value)
-            resize()
-          }}
-          placeholder="Start writing…"
-          rows={1}
-          className="w-full bg-transparent text-text-secondary text-sm leading-relaxed placeholder:text-text-muted focus:outline-none resize-none overflow-hidden"
-          style={{ minHeight: '60vh' }}
+        {/* Formatting toolbar */}
+        <div className="flex items-center gap-1 mb-4 flex-wrap">
+          {/* Text style dropdown */}
+          <div className="relative group">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-text-secondary hover:bg-bg-card border border-border transition-colors min-w-20"
+            >
+              {textStyleLabel}
+              <ChevronDown size={11} className="ml-auto" />
+            </button>
+            <div className="absolute top-full left-0 mt-1 z-20 bg-bg-card rounded-xl border border-border shadow-lg py-1 min-w-36 hidden group-focus-within:block">
+              <button
+                type="button"
+                onMouseDown={e => { e.preventDefault(); editor?.chain().focus().setParagraph().run() }}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-bg-page transition-colors ${!isH1 && !isH2 ? 'text-text-primary font-medium' : 'text-text-secondary'}`}
+              >
+                Normal
+              </button>
+              <button
+                type="button"
+                onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleHeading({ level: 1 }).run() }}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-bg-page transition-colors font-semibold ${isH1 ? 'text-text-primary' : 'text-text-secondary'}`}
+              >
+                Heading
+              </button>
+              <button
+                type="button"
+                onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleHeading({ level: 2 }).run() }}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-bg-page transition-colors font-medium ${isH2 ? 'text-text-primary' : 'text-text-secondary'}`}
+              >
+                Subtitle
+              </button>
+            </div>
+          </div>
+
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* Bold */}
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleBold().run() }}
+            className={`rounded-lg p-1.5 text-sm font-bold transition-colors ${
+              editor?.isActive('bold') ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+            }`}
+            aria-label="Bold"
+          >
+            <Bold size={14} />
+          </button>
+
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* Bullet list */}
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleBulletList().run() }}
+            className={`rounded-lg p-1.5 transition-colors ${
+              editor?.isActive('bulletList') ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+            }`}
+            aria-label="Bullet list"
+          >
+            <List size={14} />
+          </button>
+
+          {/* Ordered list */}
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleOrderedList().run() }}
+            className={`rounded-lg p-1.5 transition-colors ${
+              editor?.isActive('orderedList') ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+            }`}
+            aria-label="Numbered list"
+          >
+            <ListOrdered size={14} />
+          </button>
+
+          {/* Checklist */}
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleTaskList().run() }}
+            className={`rounded-lg p-1.5 transition-colors ${
+              editor?.isActive('taskList') ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+            }`}
+            aria-label="Checklist"
+          >
+            <CheckSquare size={14} />
+          </button>
+
+          <div className="hidden sm:flex items-center gap-1 ml-1">
+            <div className="w-px h-5 bg-border mx-1" />
+            {/* Heading shortcuts */}
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleHeading({ level: 1 }).run() }}
+              className={`rounded-lg p-1.5 transition-colors ${
+                isH1 ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+              }`}
+              aria-label="Heading 1"
+            >
+              <Heading1 size={14} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleHeading({ level: 2 }).run() }}
+              className={`rounded-lg p-1.5 transition-colors ${
+                isH2 ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+              }`}
+              aria-label="Heading 2"
+            >
+              <Heading2 size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tiptap editor */}
+        <EditorContent
+          editor={editor}
+          className="tiptap-editor min-h-[50vh] text-text-secondary text-sm leading-relaxed"
         />
+
+        {/* Sub-notes panel */}
+        {(onNewSubNote || subNotes.length > 0) && (
+          <div className="mt-12 pt-6 border-t border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-text-muted text-xs font-medium uppercase tracking-wide">
+                Sub-notes ({subNotes.length})
+              </h3>
+              {onNewSubNote && (
+                <button
+                  type="button"
+                  onClick={onNewSubNote}
+                  className="flex items-center gap-1 text-xs text-text-muted hover:text-accent-gold transition-colors"
+                >
+                  <Plus size={12} />
+                  New sub-note
+                </button>
+              )}
+            </div>
+
+            {subNotes.length === 0 ? (
+              <p className="text-text-muted text-xs italic">No sub-notes yet.</p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {subNotes.map(sub => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => onOpenSubNote?.(sub)}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-bg-card px-4 py-3 text-left hover:shadow-sm transition-shadow group"
+                  >
+                    <FileText size={14} className="text-text-muted shrink-0" />
+                    <span className="flex-1 min-w-0 text-sm text-text-primary font-medium truncate">
+                      {sub.title || 'Untitled'}
+                    </span>
+                    <ChevronRight size={14} className="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

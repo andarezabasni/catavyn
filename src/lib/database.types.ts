@@ -46,6 +46,7 @@ export interface Database {
           id: string
           user_id: string
           category_id: string | null
+          parent_id: string | null
           title: string
           content: string
           is_pinned: boolean
@@ -58,6 +59,7 @@ export interface Database {
           id?: string
           user_id: string
           category_id?: string | null
+          parent_id?: string | null
           title?: string
           content?: string
           is_pinned?: boolean
@@ -70,6 +72,7 @@ export interface Database {
           id?: string
           user_id?: string
           category_id?: string | null
+          parent_id?: string | null
           title?: string
           content?: string
           is_pinned?: boolean

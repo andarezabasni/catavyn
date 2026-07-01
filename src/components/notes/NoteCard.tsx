@@ -1,4 +1,4 @@
-import { Pin, Trash2, Lock } from 'lucide-react'
+import { Pin, Trash2, Lock, FileText } from 'lucide-react'
 import type { Note } from '../../hooks/useNotes'
 import type { Tag } from '../../hooks/useTags'
 import TagBadge from '../tags/TagBadge'
@@ -7,6 +7,7 @@ interface NoteCardProps {
   note: Note
   tags?: Tag[]
   searchQuery?: string
+  subNoteCount?: number
   onClick?: () => void
   onDelete?: () => void
   onPin?: () => void
@@ -34,20 +35,25 @@ function Highlight({ text, query }: { text: string; query: string }) {
   )
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 function getExcerpt(content: string, query: string, maxLen = 120): string {
-  const trimmed = content.trim()
-  if (!trimmed) return ''
-  if (!query) return trimmed.slice(0, maxLen)
-  const idx = trimmed.toLowerCase().indexOf(query.toLowerCase())
-  if (idx === -1) return trimmed.slice(0, maxLen)
+  const plain = stripHtml(content).trim()
+  if (!plain) return ''
+  if (!query) return plain.slice(0, maxLen)
+  const idx = plain.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return plain.slice(0, maxLen)
   const start = Math.max(0, idx - 30)
-  return (start > 0 ? '…' : '') + trimmed.slice(start, start + maxLen)
+  return (start > 0 ? '…' : '') + plain.slice(start, start + maxLen)
 }
 
 export default function NoteCard({
   note,
   tags = [],
   searchQuery = '',
+  subNoteCount = 0,
   onClick,
   onDelete,
   onPin,
@@ -110,9 +116,17 @@ export default function NoteCard({
         </div>
       )}
 
-      {/* Date + delete */}
+      {/* Date + sub-note count + delete */}
       <div className="flex items-center justify-between mt-auto pt-1">
-        <span className="text-text-muted text-xs">{date}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-text-muted text-xs">{date}</span>
+          {subNoteCount > 0 && (
+            <span className="flex items-center gap-0.5 text-text-muted text-xs">
+              <FileText size={10} />
+              {subNoteCount}
+            </span>
+          )}
+        </div>
         {onDelete && (
           <button
             type="button"
