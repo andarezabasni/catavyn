@@ -78,6 +78,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       ...payload,
       pin_hash: payload.pin_hash ?? null,
       parent_id: (payload.parent_id ?? null) as string | null,
+      updated_by: (payload.updated_by ?? null) as string | null,
     }
     if (!options.deleted) setNotes(prev => [optimistic, ...prev])
 
@@ -100,7 +101,7 @@ export function useNotes(options: UseNotesOptions = {}) {
 
   const updateNote = useCallback(async (id: string, data: NoteUpdate) => {
     const now = new Date().toISOString()
-    const patch = { ...data, updated_at: now }
+    const patch = { ...data, updated_at: now, updated_by: user?.id ?? null }
 
     setNotes(prev => prev.map(n => n.id === id ? { ...n, ...patch } : n))
 
@@ -114,7 +115,7 @@ export function useNotes(options: UseNotesOptions = {}) {
       toast.error('Failed to save note')
       await fetchNotes()
     }
-  }, [fetchNotes])
+  }, [user, fetchNotes])
 
   const deleteNote = useCallback(async (id: string) => {
     const now = new Date().toISOString()

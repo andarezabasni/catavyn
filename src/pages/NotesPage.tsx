@@ -4,9 +4,12 @@ import { LayoutGrid, List, Plus, RotateCcw, X, FileText } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
+import { useCollaborators } from '../hooks/useCollaborators'
+import { useAuth } from '../context/AuthContext'
 import NoteEditor from '../components/notes/NoteEditor'
 import NoteCard from '../components/notes/NoteCard'
 import NotePinModal from '../components/notes/NotePinModal'
+import CollabPanel from '../components/notes/CollabPanel'
 import SearchBar from '../components/ui/SearchBar'
 import { NoteCardSkeleton, NoteListRowSkeleton } from '../components/ui/Skeleton'
 import EmptyState from '../components/ui/EmptyState'
@@ -31,6 +34,7 @@ function EditorWithSubNotes(props: React.ComponentProps<typeof NoteEditor> & { n
 }
 
 export default function NotesPage() {
+  const { user } = useAuth()
   const { notes, loading, createNote, updateNote, deleteNote, restoreNote, togglePin } = useNotes({ rootOnly: true })
   const { categories } = useCategories()
   const { tags, noteTagsMap, createTag, attachTag, detachTag } = useTags()
@@ -59,6 +63,7 @@ export default function NotesPage() {
   // Stores the full sub-note data when navigating into a sub-note, since sub-notes
   // are not in the root-only `notes` array and can't be found via notes.find()
   const [openedSubNote, setOpenedSubNote] = useState<Note | null>(null)
+  const [collabPanelOpen, setCollabPanelOpen] = useState(false)
 
   const isInSubNote = editorStack.length > 0
   const currentParentNote = editorStack[editorStack.length - 1] ?? null
@@ -66,6 +71,10 @@ export default function NotesPage() {
   const editingNote = isInSubNote
     ? openedSubNote
     : (editingNoteId ? notes.find(n => n.id === editingNoteId) ?? null : null)
+
+  // Active note ID for collab (root note only, not sub-notes)
+  const collabNoteId = editorOpen && !isInSubNote ? editingNoteId : null
+  const { logActivity } = useCollaborators(collabNoteId)
 
   // Sub-note counts fetched per card — done inline via a helper map built from noteTagsMap
   // (actual sub-note counts require a separate query; we use a simple approach below)
@@ -182,7 +191,11 @@ export default function NotesPage() {
     const targetId = isInSubNote ? currentParentNote?.id : editingNoteId
 
     if (targetId) {
+      const prevTitle = isInSubNote ? openedSubNote?.title : editingNote?.title
       await updateNote(targetId, { title, content })
+      if (!isInSubNote && collabNoteId) {
+        void logActivity(prevTitle !== title ? 'renamed' : 'edited')
+      }
     } else {
       const created = await createNote({ title, content, category_id: pendingCategoryId ?? undefined })
       if (created) {
@@ -194,6 +207,7 @@ export default function NotesPage() {
           })
         )
         setPendingTagIds([])
+        void logActivity('created')
       }
     }
   }
@@ -314,6 +328,7 @@ export default function NotesPage() {
           onTagRemove={handleTagRemove}
           onTagCreate={handleTagCreate}
           onOpenSubNote={(sub) => openSubNote(editingNote!, sub)}
+          onShare={() => setCollabPanelOpen(true)}
         />
       ) : (
         <NoteEditor
@@ -489,6 +504,13 @@ export default function NotesPage() {
         onUnlocked={handlePinUnlocked}
         onPinChanged={handlePinChanged}
         onClose={() => setPinModal(null)}
+      />
+    )}
+    {collabPanelOpen && collabNoteId && (
+      <CollabPanel
+        noteId={collabNoteId}
+        noteOwnerId={editingNote?.user_id ?? user?.id ?? ''}
+        onClose={() => setCollabPanelOpen(false)}
       />
     )}
     </>

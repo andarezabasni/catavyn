@@ -51,6 +51,7 @@ export interface Database {
           content: string
           is_pinned: boolean
           pin_hash: string | null
+          updated_by: string | null
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -64,6 +65,7 @@ export interface Database {
           content?: string
           is_pinned?: boolean
           pin_hash?: string | null
+          updated_by?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -77,9 +79,68 @@ export interface Database {
           content?: string
           is_pinned?: boolean
           pin_hash?: string | null
+          updated_by?: string | null
           updated_at?: string
           deleted_at?: string | null
         }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          email: string
+          display_name: string | null
+          created_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          display_name?: string | null
+          created_at?: string
+        }
+        Update: {
+          display_name?: string | null
+        }
+        Relationships: []
+      }
+      note_collaborators: {
+        Row: {
+          note_id: string
+          user_id: string
+          invited_email: string
+          can_edit: boolean
+          added_at: string
+        }
+        Insert: {
+          note_id: string
+          user_id: string
+          invited_email: string
+          can_edit?: boolean
+          added_at?: string
+        }
+        Update: {
+          can_edit?: boolean
+        }
+        Relationships: []
+      }
+      note_activity: {
+        Row: {
+          id: string
+          note_id: string
+          user_id: string | null
+          user_email: string | null
+          action: 'created' | 'edited' | 'renamed' | 'shared'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          note_id: string
+          user_id?: string | null
+          user_email?: string | null
+          action: 'created' | 'edited' | 'renamed' | 'shared'
+          created_at?: string
+        }
+        Update: Record<string, never>
         Relationships: []
       }
       tags: {
