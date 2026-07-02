@@ -76,6 +76,12 @@ export default function NoteEditor({
   const tagDropdownRef = useRef<HTMLDivElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
   const didFocus = useRef(false)
+  // Debounced autosave: pending timer + a ref to the latest `save` closure so
+  // the tiptap onUpdate callback (bound once) never fires a stale save with
+  // an outdated title.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestSaveRef = useRef<() => Promise<void>>(async () => {})
+  const autosaveTriggerRef = useRef<() => void>(() => {})
 
   const currentCategory = categories.find(c => c.id === categoryId) ?? null
   const noteTagIds = new Set(noteTags.map(t => t.id))
@@ -103,6 +109,7 @@ export default function NoteEditor({
         class: 'prose-editor focus:outline-none',
       },
     },
+    onUpdate: () => autosaveTriggerRef.current(),
   })
 
   useNoteRealtime(noteId ?? null, useCallback(({ title: remoteTitle, content: remoteContent }) => {
@@ -148,12 +155,54 @@ export default function NoteEditor({
 
   const save = useCallback(async () => {
     if (status === 'saving' || !editor) return
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
     setStatus('saving')
     const html = editor.getHTML()
     await onSave(title.trim() || 'Untitled', html)
     setStatus('saved')
     setTimeout(() => setStatus('idle'), 2000)
   }, [status, onSave, title, editor])
+
+  useEffect(() => {
+    latestSaveRef.current = save
+  }, [save])
+
+  // Stable identity (tiptap's onUpdate is bound once) — always resolves the
+  // latest `save` via the ref above when the debounce timer fires.
+  const scheduleAutosave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null
+      void latestSaveRef.current()
+    }, 800)
+  }, [])
+
+  useEffect(() => {
+    autosaveTriggerRef.current = scheduleAutosave
+  }, [scheduleAutosave])
+
+  // Flush any pending autosave before leaving the editor, so navigating away
+  // (Back button, sidebar link, etc.) never drops unsaved edits.
+  async function handleBack() {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+      await latestSaveRef.current()
+    }
+    onBack()
+  }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        void latestSaveRef.current()
+      }
+    }
+  }, [])
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -201,7 +250,7 @@ export default function NoteEditor({
       {/* Toolbar */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3 bg-bg-page border-b border-border">
         <button
-          onClick={onBack}
+          onClick={() => void handleBack()}
           className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm transition-colors"
         >
           <ArrowLeft size={16} />
@@ -283,7 +332,7 @@ export default function NoteEditor({
           ref={titleRef}
           type="text"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={e => { setTitle(e.target.value); scheduleAutosave() }}
           onKeyDown={e => {
             if (e.key === 'Enter') {
               e.preventDefault()
