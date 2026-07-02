@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus, Pin, Bell, Clock, CheckSquare, FolderOpen, FileText } from 'lucide-react'
+import { Plus, Pin, Bell, Clock, CheckSquare, FolderOpen, FileText, Pencil, Trash2 } from 'lucide-react'
 import { useCategories, type Category } from '../hooks/useCategories'
 import { useNotes } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
@@ -13,7 +13,7 @@ import TaskPanel from '../components/tasks/TaskPanel'
 export default function HomePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { categories, createCategory } = useCategories()
+  const { categories, createCategory, updateCategory, deleteCategory } = useCategories()
   const { notes, loading: notesLoading, togglePin } = useNotes({ rootOnly: true, includeShared: true })
   const { noteTagsMap } = useTags()
   const { tasks: allTasks } = useTasks()
@@ -172,6 +172,8 @@ export default function HomePage() {
                     key={cat.id}
                     category={cat}
                     noteCount={noteCounts[cat.id] ?? 0}
+                    onRename={name => updateCategory(cat.id, { name })}
+                    onDelete={() => deleteCategory(cat.id)}
                   />
                 ))}
               </div>
@@ -270,14 +272,96 @@ export default function HomePage() {
   )
 }
 
-function CategoryCard({ category, noteCount }: { category: Category; noteCount: number }) {
+function CategoryCard({
+  category,
+  noteCount,
+  onRename,
+  onDelete,
+}: {
+  category: Category
+  noteCount: number
+  onRename: (name: string) => void
+  onDelete: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(category.name)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  useEffect(() => {
+    setName(category.name)
+  }, [category.name])
+
+  function commitRename() {
+    const trimmed = name.trim()
+    if (trimmed && trimmed !== category.name) {
+      onRename(trimmed)
+    } else {
+      setName(category.name)
+    }
+    setEditing(false)
+  }
+
   return (
     <div
-      className="bg-bg-card rounded-xl border border-border p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+      className="group relative bg-bg-card rounded-xl border border-border p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
       style={{ borderLeftColor: category.color, borderLeftWidth: '3px' }}
     >
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label="Rename category"
+          className="p-1 rounded-md text-text-muted hover:text-accent-gold hover:bg-bg-page transition-colors"
+        >
+          <Pencil size={12} />
+        </button>
+        {confirmingDelete ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 transition-colors"
+          >
+            Confirm?
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmingDelete(true)
+              setTimeout(() => setConfirmingDelete(false), 3000)
+            }}
+            aria-label="Delete category"
+            className="p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-bg-page transition-colors"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
+
       <div className="text-2xl mb-2 leading-none">{category.icon}</div>
-      <div className="text-text-primary font-medium text-sm truncate">{category.name}</div>
+
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commitRename()
+            if (e.key === 'Escape') { setName(category.name); setEditing(false) }
+          }}
+          maxLength={40}
+          className="w-full rounded-md border border-accent-gold bg-bg-page px-1.5 py-0.5 text-sm text-text-primary focus:outline-none"
+        />
+      ) : (
+        <div className="text-text-primary font-medium text-sm truncate">{category.name}</div>
+      )}
+
       <div className="text-text-muted text-xs mt-1">
         {noteCount} {noteCount === 1 ? 'note' : 'notes'}
       </div>
