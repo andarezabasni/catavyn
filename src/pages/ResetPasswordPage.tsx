@@ -95,11 +95,11 @@ export default function ResetPasswordPage() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full rounded-lg border border-border bg-bg-page px-3 py-2 pr-10 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-gold"
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 8 characters"
                 />
                 <button
                   type="button"

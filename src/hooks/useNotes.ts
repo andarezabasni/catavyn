@@ -8,6 +8,10 @@ export type Note = Database['public']['Tables']['notes']['Row']
 type NoteInsert = Omit<Database['public']['Tables']['notes']['Insert'], 'user_id'>
 type NoteUpdate = Database['public']['Tables']['notes']['Update']
 
+// PostgREST .or() filters are built by string interpolation, so ids must be
+// strictly validated to prevent filter-operator injection.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 interface UseNotesOptions {
   deleted?: boolean
   parentId?: string    // fetch sub-notes of this note
@@ -97,7 +101,7 @@ export function useNotes(options: UseNotesOptions = {}) {
     if (error) {
       setNotes(prev => prev.filter(n => n.id !== tempId))
       setError(error.message)
-      toast.error('Failed to create note')
+      toast.error(`Failed to create note: ${error.message}`)
       return null
     }
 
@@ -124,6 +128,7 @@ export function useNotes(options: UseNotesOptions = {}) {
   }, [user, fetchNotes])
 
   const deleteNote = useCallback(async (id: string) => {
+    if (!UUID_RE.test(id)) return
     const now = new Date().toISOString()
 
     setNotes(prev => prev.filter(n => n.id !== id && n.parent_id !== id))
@@ -143,6 +148,7 @@ export function useNotes(options: UseNotesOptions = {}) {
   }, [fetchNotes])
 
   const restoreNote = useCallback(async (id: string) => {
+    if (!UUID_RE.test(id)) return
     setNotes(prev => prev.filter(n => n.id !== id && n.parent_id !== id))
 
     const now = new Date().toISOString()

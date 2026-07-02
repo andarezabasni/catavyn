@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react'
-import { hashPin, verifyPin } from '../../lib/pin'
+import { hashPin, verifyPin, isLegacyPinHash } from '../../lib/pin'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
@@ -52,6 +52,10 @@ export default function NotePinModal({
     if (!pinHash) return
     setLoading(true)
     const ok = await verifyPin(pin, pinHash)
+    if (ok && isLegacyPinHash(pinHash)) {
+      // Transparently upgrade old unsalted hashes to salted PBKDF2
+      onPinChanged(await hashPin(pin))
+    }
     setLoading(false)
     if (ok) {
       onUnlocked()

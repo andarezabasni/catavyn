@@ -53,12 +53,12 @@ export function useCollaborators(noteId: string | null) {
   const invite = useCallback(async (email: string): Promise<boolean> => {
     if (!noteId || !user) return false
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, email')
-      .eq('email', email.trim().toLowerCase())
-      .single()
+    // Exact-match lookup via SECURITY DEFINER RPC — profiles table is no
+    // longer openly readable, so emails can't be harvested in bulk.
+    const { data: profiles } = await supabase
+      .rpc('lookup_profile_by_email', { lookup_email: email.trim().toLowerCase() })
 
+    const profile = profiles?.[0]
     if (!profile) {
       toast.error('No Catavyn account found with that email')
       return false

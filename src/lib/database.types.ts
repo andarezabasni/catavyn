@@ -224,7 +224,12 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      lookup_profile_by_email: {
+        Args: { lookup_email: string }
+        Returns: { id: string; email: string }[]
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
