@@ -7,7 +7,7 @@ import { NoteCardSkeleton } from '../components/ui/Skeleton'
 
 export default function PinnedPage() {
   const navigate = useNavigate()
-  const { notes, loading, togglePin, deleteNote } = useNotes()
+  const { notes, loading, togglePin, deleteNote } = useNotes({ rootOnly: true, includeShared: true })
   const { noteTagsMap } = useTags()
 
   const pinnedNotes = notes.filter(n => n.is_pinned)

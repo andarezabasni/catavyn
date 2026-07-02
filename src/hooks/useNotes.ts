@@ -126,12 +126,14 @@ export function useNotes(options: UseNotesOptions = {}) {
   const deleteNote = useCallback(async (id: string) => {
     const now = new Date().toISOString()
 
-    setNotes(prev => prev.filter(n => n.id !== id))
+    setNotes(prev => prev.filter(n => n.id !== id && n.parent_id !== id))
 
+    // Soft delete is a plain UPDATE, so the DB's ON DELETE CASCADE on
+    // parent_id doesn't apply here — sub-notes must be trashed explicitly.
     const { error } = await supabase
       .from('notes')
       .update({ deleted_at: now, updated_at: now })
-      .eq('id', id)
+      .or(`id.eq.${id},parent_id.eq.${id}`)
 
     if (error) {
       setError(error.message)
@@ -141,12 +143,13 @@ export function useNotes(options: UseNotesOptions = {}) {
   }, [fetchNotes])
 
   const restoreNote = useCallback(async (id: string) => {
-    setNotes(prev => prev.filter(n => n.id !== id))
+    setNotes(prev => prev.filter(n => n.id !== id && n.parent_id !== id))
 
+    const now = new Date().toISOString()
     const { error } = await supabase
       .from('notes')
-      .update({ deleted_at: null, updated_at: new Date().toISOString() })
-      .eq('id', id)
+      .update({ deleted_at: null, updated_at: now })
+      .or(`id.eq.${id},parent_id.eq.${id}`)
 
     if (error) {
       setError(error.message)

@@ -14,7 +14,7 @@ export default function HomePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { categories, createCategory } = useCategories()
-  const { notes, loading: notesLoading, togglePin } = useNotes()
+  const { notes, loading: notesLoading, togglePin } = useNotes({ rootOnly: true, includeShared: true })
   const { noteTagsMap } = useTags()
   const { tasks: allTasks } = useTasks()
 
