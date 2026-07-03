@@ -6,8 +6,9 @@ import TaskItem from '@tiptap/extension-task-item'
 import {
   ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus,
   Lock, LockOpen, Bold, Heading1, Heading2, List, ListOrdered,
-  CheckSquare, FileText, ChevronRight, Users, RefreshCw,
+  CheckSquare, FileText, ChevronRight, Users, RefreshCw, Download,
 } from 'lucide-react'
+import { exportNoteAsMarkdown, exportNoteAsPdf } from '../../lib/markdown'
 import type { Category } from '../../hooks/useCategories'
 import type { Tag } from '../../hooks/useTags'
 import type { Note } from '../../hooks/useNotes'
@@ -70,8 +71,10 @@ export default function NoteEditor({
   const [catOpen, setCatOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
+  const [exportOpen, setExportOpen] = useState(false)
 
   const titleRef = useRef<HTMLInputElement>(null)
+  const exportDropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
   const tagDropdownRef = useRef<HTMLDivElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
@@ -139,6 +142,17 @@ export default function NoteEditor({
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [catOpen])
+
+  useEffect(() => {
+    if (!exportOpen) return
+    function handleClick(e: MouseEvent) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setExportOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [exportOpen])
 
   useEffect(() => {
     if (!tagOpen) return
@@ -215,6 +229,17 @@ export default function NoteEditor({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [save])
 
+  function handleExport(format: 'md' | 'pdf') {
+    setExportOpen(false)
+    if (!editor) return
+    const exportTitle = title.trim() || 'Untitled'
+    if (format === 'md') {
+      exportNoteAsMarkdown(exportTitle, editor.getHTML())
+    } else {
+      exportNoteAsPdf(exportTitle, editor.getHTML())
+    }
+  }
+
   function selectCategory(id: string | null) {
     setCatOpen(false)
     onCategoryChange?.(id)
@@ -264,6 +289,38 @@ export default function NoteEditor({
               Saved
             </span>
           )}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setExportOpen(v => !v)}
+              aria-label="Export note"
+              className="flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-1.5 text-sm text-text-muted hover:text-accent-gold hover:bg-accent-gold/10 transition-colors"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+
+            {exportOpen && (
+              <div className="absolute top-full right-0 mt-1 z-20 bg-bg-card rounded-xl border border-border shadow-lg py-1 min-w-44">
+                <button
+                  type="button"
+                  onClick={() => handleExport('md')}
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-page transition-colors"
+                >
+                  <FileText size={13} className="text-text-muted shrink-0" />
+                  Markdown (.md)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport('pdf')}
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-page transition-colors"
+                >
+                  <FileText size={13} className="text-text-muted shrink-0" />
+                  PDF (print)
+                </button>
+              </div>
+            )}
+          </div>
           {onShare && (
             <button
               type="button"

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { LayoutGrid, List, Plus, RotateCcw, X, FileText } from 'lucide-react'
+import { LayoutGrid, List, Plus, RotateCcw, X, FileText, Upload } from 'lucide-react'
 import { useNotes } from '../hooks/useNotes'
 import { useCategories } from '../hooks/useCategories'
 import { useTags } from '../hooks/useTags'
@@ -13,6 +13,8 @@ import CollabPanel from '../components/notes/CollabPanel'
 import SearchBar from '../components/ui/SearchBar'
 import { NoteCardSkeleton, NoteListRowSkeleton } from '../components/ui/Skeleton'
 import EmptyState from '../components/ui/EmptyState'
+import { parseMarkdownFile, isImportableFile } from '../lib/markdown'
+import { toast } from '../lib/toast'
 import type { Note } from '../hooks/useNotes'
 
 type ViewMode = 'grid' | 'list'
@@ -55,6 +57,8 @@ export default function NotesPage() {
 
   const [undoNote, setUndoNote] = useState<{ id: string; title: string } | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
   const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
   const [pendingTagIds, setPendingTagIds] = useState<string[]>([])
 
@@ -250,6 +254,31 @@ export default function NotesPage() {
     return created
   }
 
+  async function handleImportFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return
+    const files = Array.from(fileList)
+    const skipped = files.filter(f => !isImportableFile(f))
+    const importable = files.filter(isImportableFile)
+
+    setImporting(true)
+    let imported = 0
+    for (const file of importable) {
+      try {
+        const text = await file.text()
+        const { title, content } = parseMarkdownFile(text, file.name)
+        const created = await createNote({ title, content, category_id: categoryFilter ?? undefined })
+        if (created) imported++
+      } catch {
+        // Unreadable file — counted below as not imported
+      }
+    }
+    setImporting(false)
+
+    if (imported > 0) toast.success(`Imported ${imported} note${imported === 1 ? '' : 's'}`)
+    if (skipped.length > 0) toast.error(`Skipped ${skipped.length} file${skipped.length === 1 ? '' : 's'} (only .md, .markdown, .txt up to 1 MB)`)
+    else if (imported < importable.length) toast.error(`${importable.length - imported} file(s) could not be imported`)
+  }
+
   async function handleDelete(note: Note) {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
     await deleteNote(note.id)
@@ -379,6 +408,26 @@ export default function NotesPage() {
               <List size={16} />
             </button>
           </div>
+
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".md,.markdown,.txt"
+            multiple
+            className="hidden"
+            onChange={e => {
+              void handleImportFiles(e.target.files)
+              e.target.value = ''
+            }}
+          />
+          <button
+            onClick={() => importInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-bg-card px-3 py-1.5 text-sm font-medium text-text-secondary hover:border-accent-gold/50 disabled:opacity-50 transition-colors"
+          >
+            <Upload size={15} />
+            <span className="hidden sm:inline">{importing ? 'Importing…' : 'Import'}</span>
+          </button>
 
           <button
             onClick={openNew}
