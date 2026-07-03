@@ -58,6 +58,8 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+Open `https://catavyn.vercel.app/` for free to try 
+
 ## Desktop build
 
 Download the Windows installer from [Releases](https://github.com/andarezabasni/catavyn/releases).
