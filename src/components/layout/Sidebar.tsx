@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router'
-import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun, Coffee } from 'lucide-react'
+import { Home, FileText, Tag, Pin, Trash2, LogOut, Moon, Sun, Coffee, Bell, BellOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useTaskReminders } from '../../hooks/useTaskReminders'
 import SupportModal from '../ui/SupportModal'
 import appLogo from '../../assets/logo.png'
 
@@ -19,6 +20,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const [showSupport, setShowSupport] = useState(false)
+  const { supported, enabled: remindersOn, toggle: toggleReminders } = useTaskReminders()
 
   async function handleSignOut() {
     await signOut()
@@ -50,6 +52,22 @@ export default function Sidebar() {
             </NavLink>
           ))}
         </nav>
+
+        {supported && (
+          <button
+            type="button"
+            onClick={() => void toggleReminders()}
+            aria-label={remindersOn ? 'Turn off task reminders' : 'Turn on task reminders'}
+            className={`flex flex-col items-center gap-1 w-14 py-3 rounded-xl transition-colors mb-1 ${
+              remindersOn
+                ? 'text-accent-gold hover:bg-accent-gold/10'
+                : 'text-text-muted hover:text-text-secondary hover:bg-black/5 dark:hover:bg-white/5'
+            }`}
+          >
+            {remindersOn ? <Bell size={20} strokeWidth={1.75} /> : <BellOff size={20} strokeWidth={1.75} />}
+            <span className="text-[10px] font-medium">Remind</span>
+          </button>
+        )}
 
         <button
           type="button"
