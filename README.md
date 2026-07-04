@@ -2,7 +2,7 @@
 
 A note-taking and daily task app. Free, open source, works on web and desktop.
 
-**[catavyn.vercel.app](https://catavyn.vercel.app)** · [Download for Windows](https://github.com/andarezabasni/catavyn/releases/tag/v0.1.0)
+**[catavyn.fun](https://catavyn.fun)** · [Download for Windows](https://github.com/andarezabasni/catavyn/releases/tag/v0.1.0)
 
 ---
 
@@ -58,7 +58,7 @@ npm run dev
 
 Open `http://localhost:5173`.
 
-Open `https://catavyn.vercel.app/` for free to try 
+Or try it instantly at [catavyn.fun](https://catavyn.fun) — free, no install needed.
 
 ## Desktop build
 

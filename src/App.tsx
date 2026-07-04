@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import HomePage from './pages/HomePage'
+import LandingPage from './pages/LandingPage'
 import NotesPage from './pages/NotesPage'
 import TagsPage from './pages/TagsPage'
 import PinnedPage from './pages/PinnedPage'
@@ -21,6 +22,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) return null
   if (!session) return <Navigate to="/login" replace />
   return <MainLayout>{children}</MainLayout>
+}
+
+// "/" shows the marketing landing page to visitors and the app home to
+// signed-in users — this also gives Google real content to index.
+function RootRoute() {
+  const { session, loading } = useAuth()
+  if (loading) return null
+  if (session) return <MainLayout><HomePage /></MainLayout>
+  return <LandingPage />
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -46,7 +56,7 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
       <Route path="/tags" element={<ProtectedRoute><TagsPage /></ProtectedRoute>} />
       <Route path="/pinned" element={<ProtectedRoute><PinnedPage /></ProtectedRoute>} />
