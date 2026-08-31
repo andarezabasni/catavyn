@@ -376,9 +376,14 @@ export default function NoteEditor({
         return false
       },
       handleDrop: (_view, event, _slice, moved) => {
-        if (!moved && event.dataTransfer?.files?.length) {
+        // If moving/dragging an existing node inside the editor, let ProseMirror handle it natively
+        if (moved) return false
+
+        // Check if an external image file is being dropped from outside the browser/app
+        if (event.dataTransfer?.files?.length) {
           const file = event.dataTransfer.files[0]
           if (file.type.startsWith('image/')) {
+            event.preventDefault()
             handleImageFile(file)
             return true
           }
