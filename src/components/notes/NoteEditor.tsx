@@ -7,7 +7,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import Image from '@tiptap/extension-image'
 import {
   ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus,
-  Lock, LockOpen, Bold, Heading1, Heading2, List, ListOrdered,
+  Lock, LockOpen, Bold, Strikethrough, Heading1, Heading2, List, ListOrdered,
   CheckSquare, FileText, ChevronRight, Users, RefreshCw, Download,
   Image as ImageIcon, AlignLeft, AlignCenter, AlignRight, Layout,
   Type,
@@ -900,6 +900,19 @@ export default function NoteEditor({
             aria-label="Bold"
           >
             <Bold size={14} />
+          </button>
+
+          {/* Strikethrough */}
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); editor?.chain().focus().toggleStrike().run() }}
+            className={`rounded-lg p-1.5 transition-colors ${
+              editor?.isActive('strike') ? 'bg-accent-gold/15 text-accent-gold' : 'text-text-muted hover:text-text-secondary hover:bg-bg-card'
+            }`}
+            aria-label="Strikethrough"
+            title="Strikethrough"
+          >
+            <Strikethrough size={14} />
           </button>
 
           <div className="w-px h-5 bg-border mx-1" />
