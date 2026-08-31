@@ -53,6 +53,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Inline / Side-by-side"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ wrap: 'inline' }); setMenuOpen(false) }}
             className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'inline' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -61,6 +62,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Square Left (Float Left)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ wrap: 'square-left' }); setMenuOpen(false) }}
             className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-left' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -69,6 +71,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Square Right (Float Right)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ wrap: 'square-right' }); setMenuOpen(false) }}
             className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-right' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -77,6 +80,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Full Break"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ wrap: 'break', width: '100%' }); setMenuOpen(false) }}
             className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'break' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -85,6 +89,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Behind text (Watermark)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ wrap: 'behind' }); setMenuOpen(false) }}
             className={`px-1 py-0.5 rounded hover:bg-bg-page text-[10px] ${wrap === 'behind' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-muted'}`}
           >
@@ -97,6 +102,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Mini (20% - 5 col)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ width: '18%', wrap: 'inline' }); setMenuOpen(false) }}
             className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '18%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -105,6 +111,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Small (30% - 3 col)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ width: '31%', wrap: 'inline' }); setMenuOpen(false) }}
             className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '31%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -113,6 +120,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Medium (48% - 2 col)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ width: '48%', wrap: 'inline' }); setMenuOpen(false) }}
             className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '48%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -121,6 +129,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Full (100%)"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => { updateAttributes({ width: '100%' }); setMenuOpen(false) }}
             className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '100%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -132,6 +141,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           <button
             type="button"
             title="Delete image"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => deleteNode()}
             className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
@@ -144,6 +154,8 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
 }
 
 const CustomImage = Image.extend({
+  inline: true,
+  group: 'inline',
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -152,11 +164,12 @@ const CustomImage = Image.extend({
         parseHTML: element => element.getAttribute('data-wrap') || 'inline',
         renderHTML: attributes => ({
           'data-wrap': attributes.wrap,
+          style: `width: ${attributes.width || '100%'};`,
         }),
       },
       width: {
         default: '100%',
-        parseHTML: element => element.getAttribute('data-width') || '100%',
+        parseHTML: element => element.getAttribute('data-width') || element.style.width || '100%',
         renderHTML: attributes => ({
           'data-width': attributes.width,
         }),
