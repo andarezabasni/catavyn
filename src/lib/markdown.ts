@@ -97,7 +97,7 @@ export function htmlToMarkdown(html: string): string {
       }
     }
   }
-  return blocks.filter(b => b !== '').join('\n\n')
+  return blocks.filter(b => b !== '').join('\n')
 }
 
 // ---------------------------------------------------------------------------

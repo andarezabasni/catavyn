@@ -1008,7 +1008,7 @@ export default function NoteEditor({
         {/* Tiptap editor */}
         <EditorContent
           editor={editor}
-          className="tiptap-editor min-h-[50vh] text-text-secondary text-sm leading-relaxed"
+          className="tiptap-editor min-h-[50vh] text-text-secondary text-sm"
         />
 
         {/* Sub-notes panel */}

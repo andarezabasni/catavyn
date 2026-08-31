@@ -98,10 +98,11 @@ input, textarea, [contenteditable] {
 }
 
 .tiptap-editor .ProseMirror p {
-  margin: 0 0 0.25rem;
+  margin: 0;
+  padding: 0;
   color: var(--color-text-secondary);
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .tiptap-editor .ProseMirror h1 {
@@ -130,12 +131,12 @@ input, textarea, [contenteditable] {
   margin: 0.25rem 0;
   color: var(--color-text-secondary);
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .tiptap-editor .ProseMirror ul { list-style-type: disc; }
 .tiptap-editor .ProseMirror ol { list-style-type: decimal; }
-.tiptap-editor .ProseMirror li { margin: 0.08rem 0; }
+.tiptap-editor .ProseMirror li { margin: 0; }
 
 /* Task list / checklist */
 .tiptap-editor .ProseMirror ul[data-type="taskList"] {
