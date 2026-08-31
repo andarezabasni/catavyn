@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, Extension } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
@@ -10,6 +10,7 @@ import {
   Lock, LockOpen, Bold, Heading1, Heading2, List, ListOrdered,
   CheckSquare, FileText, ChevronRight, Users, RefreshCw, Download,
   Image as ImageIcon, AlignLeft, AlignCenter, AlignRight, Layout,
+  Type,
 } from 'lucide-react'
 import { exportNoteAsMarkdown, exportNoteAsPdf } from '../../lib/markdown'
 import type { Category } from '../../hooks/useCategories'
@@ -159,6 +160,68 @@ const CustomImage = Image.extend({
   },
 })
 
+// Custom extension for font size styling
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    fontSize: {
+      setFontSize: (size: string) => ReturnType
+      unsetFontSize: () => ReturnType
+    }
+  }
+}
+
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addOptions() {
+    return {
+      types: ['textStyle', 'paragraph', 'heading', 'taskItem', 'listItem'],
+    }
+  },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize?.replace(/['"]+/g, ''),
+            renderHTML: attributes => {
+              if (!attributes.fontSize) {
+                return {}
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      setFontSize: (fontSize: string) => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize })
+          .run()
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize: null })
+          .run()
+      },
+    }
+  },
+})
+
+const FONT_SIZES = [
+  { label: 'Small', value: '12px' },
+  { label: 'Normal', value: '14px' },
+  { label: 'Medium', value: '16px' },
+  { label: 'Large', value: '18px' },
+  { label: 'Extra Large', value: '22px' },
+]
+
 interface NoteEditorProps {
   initialTitle?: string
   initialContent?: string
@@ -269,6 +332,7 @@ export default function NoteEditor({
       CustomImage.configure({
         allowBase64: true,
       }),
+      FontSize,
     ],
     content: initialContent || '',
     editorProps: {
@@ -783,6 +847,44 @@ export default function NoteEditor({
               >
                 Subtitle
               </button>
+            </div>
+          </div>
+
+          {/* Font size dropdown */}
+          <div className="relative group">
+            <button
+              type="button"
+              title="Font size"
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-text-secondary hover:bg-bg-card border border-border transition-colors"
+            >
+              <Type size={13} className="text-text-muted" />
+              <ChevronDown size={10} className="text-text-muted" />
+            </button>
+            <div className="absolute top-full left-0 mt-1 z-20 bg-bg-card rounded-xl border border-border shadow-lg py-1 min-w-32 hidden group-focus-within:block">
+              <button
+                type="button"
+                onMouseDown={e => {
+                  e.preventDefault()
+                  editor?.chain().focus().unsetFontSize().run()
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-page transition-colors"
+              >
+                Default
+              </button>
+              {FONT_SIZES.map(s => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    editor?.chain().focus().setFontSize(s.value).run()
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-page transition-colors flex items-center justify-between"
+                >
+                  <span>{s.label}</span>
+                  <span className="text-[10px] text-text-muted">{s.value}</span>
+                </button>
+              ))}
             </div>
           </div>
 
