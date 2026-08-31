@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Toaster from './components/ui/Toaster'
+import FluidSmokeCursor from './components/ui/FluidSmokeCursor'
 import MainLayout from './components/layout/MainLayout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -73,6 +74,7 @@ export default function App() {
         <AuthProvider>
           <AppRoutes />
           <Toaster />
+          <FluidSmokeCursor />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
