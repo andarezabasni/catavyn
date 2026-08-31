@@ -1,6 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 
+interface RibbonPoint {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  age: number
+  maxAge: number
+  width: number
+  color: string
+}
+
 export default function FluidSmokeCursor() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { isDark } = useTheme()
@@ -13,166 +24,129 @@ export default function FluidSmokeCursor() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null
-    if (!gl) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    let width = (canvas.width = Math.floor(window.innerWidth / 2))
-    let height = (canvas.height = Math.floor(window.innerHeight / 2))
+    let width = (canvas.width = window.innerWidth)
+    let height = (canvas.height = window.innerHeight)
 
     const handleResize = () => {
       if (!canvas) return
-      width = canvas.width = Math.floor(window.innerWidth / 2)
-      height = canvas.height = Math.floor(window.innerHeight / 2)
-      gl.viewport(0, 0, width, height)
+      width = canvas.width = window.innerWidth
+      height = canvas.height = window.innerHeight
     }
     window.addEventListener('resize', handleResize)
 
-    // Minimal high-performance fluid shader
-    const vertShaderSrc = `
-      attribute vec2 a_pos;
-      varying vec2 v_uv;
-      void main() {
-        v_uv = a_pos * 0.5 + 0.5;
-        gl_Position = vec4(a_pos, 0.0, 1.0);
-      }
-    `
-
-    const fragShaderSrc = `
-      precision highp float;
-      varying vec2 v_uv;
-      uniform sampler2D u_tex;
-      uniform vec2 u_mouse;
-      uniform vec2 u_vel;
-      uniform float u_time;
-      uniform vec3 u_color;
-      uniform float u_decay;
-      uniform float u_aspect;
-
-      void main() {
-        vec2 uv = v_uv;
-        // Advect with slight curl distortion
-        vec2 offset = texture2D(u_tex, uv).xy * 0.003;
-        vec4 prev = texture2D(u_tex, uv - offset) * u_decay;
-
-        // Splat at mouse
-        vec2 m = u_mouse;
-        vec2 diff = (uv - m);
-        diff.x *= u_aspect;
-        float d = length(diff);
-        float splat = exp(-d * d * 800.0) * length(u_vel) * 0.08;
-
-        vec3 col = prev.rgb + u_color * splat;
-        gl_FragColor = vec4(col, max(prev.a * u_decay, splat * 1.5));
-      }
-    `
-
-    function createShader(glCtx: WebGLRenderingContext, type: number, src: string) {
-      const shader = glCtx.createShader(type)!
-      glCtx.shaderSource(shader, src)
-      glCtx.compileShader(shader)
-      return shader
-    }
-
-    const program = gl.createProgram()!
-    gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vertShaderSrc))
-    gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc))
-    gl.linkProgram(program)
-    gl.useProgram(program)
-
-    // Fullscreen quad
-    const quadBuf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW)
-    const aPos = gl.getAttribLocation(program, 'a_pos')
-    gl.enableVertexAttribArray(aPos)
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0)
-
-    // Double buffer FBOs for silky ping-pong fluid persistence
-    function createFBO() {
-      const tex = gl!.createTexture()!
-      gl!.bindTexture(gl!.TEXTURE_2D, tex)
-      gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA, width, height, 0, gl!.RGBA, gl!.UNSIGNED_BYTE, null)
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR)
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR)
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE)
-      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE)
-
-      const fbo = gl!.createFramebuffer()!
-      gl!.bindFramebuffer(gl!.FRAMEBUFFER, fbo)
-      gl!.framebufferTexture2D(gl!.FRAMEBUFFER, gl!.COLOR_ATTACHMENT0, gl!.TEXTURE_2D, tex, 0)
-      return { fbo, tex }
-    }
-
-    let fbo1 = createFBO()
-    let fbo2 = createFBO()
-
-    const uTex = gl.getUniformLocation(program, 'u_tex')
-    const uMouse = gl.getUniformLocation(program, 'u_mouse')
-    const uVel = gl.getUniformLocation(program, 'u_vel')
-    const uColor = gl.getUniformLocation(program, 'u_color')
-    const uDecay = gl.getUniformLocation(program, 'u_decay')
-    const uAspect = gl.getUniformLocation(program, 'u_aspect')
-
-    let mouseX = 0.5
-    let mouseY = 0.5
-    let velX = 0
-    let velY = 0
+    const points: RibbonPoint[] = []
     let lastX = 0
     let lastY = 0
+    let lastTime = performance.now()
 
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      const cx = 'touches' in e ? e.touches[0].clientX : e.clientX
-      const cy = 'touches' in e ? e.touches[0].clientY : e.clientY
+    const onPointerMove = (e: MouseEvent | TouchEvent) => {
+      const now = performance.now()
+      const dt = Math.max(1, now - lastTime)
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
 
-      const curX = cx / window.innerWidth
-      const curY = 1.0 - cy / window.innerHeight
+      if (lastX === 0 && lastY === 0) {
+        lastX = clientX
+        lastY = clientY
+        lastTime = now
+        return
+      }
 
-      velX = (curX - lastX) * 50
-      velY = (curY - lastY) * 50
-      mouseX = curX
-      mouseY = curY
-      lastX = curX
-      lastY = curY
+      const dx = clientX - lastX
+      const dy = clientY - lastY
+      const dist = Math.hypot(dx, dy)
+      const speed = (dist / dt) * 16.67 // speed normalized
+
+      const isHighVelocity = speed > 20
+      const pointWidth = isHighVelocity ? Math.min(38, 16 + speed * 0.4) : Math.min(22, 10 + speed * 0.25)
+      const maxAge = isHighVelocity ? 35 : 22
+
+      // Catavyn palette
+      const gold = isDarkRef.current ? '218, 178, 85' : '196, 168, 77'
+      const sage = isDarkRef.current ? '135, 175, 135' : '107, 139, 106'
+      const activeColor = isHighVelocity ? gold : (Math.random() > 0.4 ? gold : sage)
+
+      // Add point with velocity momentum
+      points.push({
+        x: clientX,
+        y: clientY,
+        vx: (dx / dt) * 2,
+        vy: (dy / dt) * 2,
+        age: 0,
+        maxAge,
+        width: pointWidth,
+        color: activeColor,
+      })
+
+      // If high velocity flick (hentakan cepat), inject expanding shockwave trail puffs
+      if (isHighVelocity) {
+        for (let i = 0; i < 3; i++) {
+          const angle = Math.random() * Math.PI * 2
+          const puffSpeed = Math.random() * 3 + 2
+          points.push({
+            x: clientX + Math.cos(angle) * 6,
+            y: clientY + Math.sin(angle) * 6,
+            vx: Math.cos(angle) * puffSpeed + (dx / dt) * 1.2,
+            vy: Math.sin(angle) * puffSpeed + (dy / dt) * 1.2,
+            age: 0,
+            maxAge: 25,
+            width: Math.random() * 24 + 14,
+            color: gold,
+          })
+        }
+      }
+
+      lastX = clientX
+      lastY = clientY
+      lastTime = now
     }
 
-    window.addEventListener('mousemove', onMove, { passive: true })
-    window.addEventListener('touchmove', onMove, { passive: true })
+    window.addEventListener('mousemove', onPointerMove, { passive: true })
+    window.addEventListener('touchmove', onPointerMove, { passive: true })
 
     let animId: number
 
     const render = () => {
-      // Damping velocity
-      velX *= 0.88
-      velY *= 0.88
+      ctx.clearRect(0, 0, width, height)
 
-      // Palette: Warm Gold / Subtle Sage
-      const color = isDarkRef.current
-        ? [0.77, 0.66, 0.30] // Glowing Gold in dark mode
-        : [0.65, 0.55, 0.28] // Warm refined parchment gold
+      // Age points and apply fluid drift
+      for (let i = points.length - 1; i >= 0; i--) {
+        const pt = points[i]
+        pt.age++
+        pt.x += pt.vx
+        pt.y += pt.vy
+        pt.vx *= 0.92
+        pt.vy *= 0.92
 
-      // Step 1: Render into FBO2 reading from FBO1
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo2.fbo)
-      gl.viewport(0, 0, width, height)
-      gl.activeTexture(gl.TEXTURE0)
-      gl.bindTexture(gl.TEXTURE_2D, fbo1.tex)
-      gl.uniform1i(uTex, 0)
-      gl.uniform2f(uMouse, mouseX, mouseY)
-      gl.uniform2f(uVel, velX, velY)
-      gl.uniform3f(uColor, color[0], color[1], color[2])
-      gl.uniform1f(uDecay, 0.955)
-      gl.uniform1f(uAspect, width / height)
-      gl.drawArrays(gl.TRIANGLES, 0, 6)
+        if (pt.age >= pt.maxAge) {
+          points.splice(i, 1)
+        }
+      }
 
-      // Step 2: Render to screen
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-      gl.viewport(0, 0, width, height)
-      gl.bindTexture(gl.TEXTURE_2D, fbo2.tex)
-      gl.drawArrays(gl.TRIANGLES, 0, 6)
+      // Draw smooth flowing ribbon curve
+      if (points.length > 2) {
+        for (let i = 1; i < points.length; i++) {
+          const p0 = points[i - 1]
+          const p1 = points[i]
+          const progress = p1.age / p1.maxAge
+          const alpha = (1 - progress) * (isDarkRef.current ? 0.35 : 0.28)
+          const currentWidth = p1.width * (1 - progress * 0.5)
 
-      // Swap buffers
-      const temp = fbo1
-      fbo1 = fbo2
-      fbo2 = temp
+          ctx.save()
+          ctx.beginPath()
+          ctx.moveTo(p0.x, p0.y)
+          ctx.lineTo(p1.x, p1.y)
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctx.lineWidth = currentWidth
+          ctx.strokeStyle = `rgba(${p1.color}, ${alpha})`
+          ctx.stroke()
+          ctx.restore()
+        }
+      }
 
       animId = requestAnimationFrame(render)
     }
@@ -181,8 +155,8 @@ export default function FluidSmokeCursor() {
 
     return () => {
       window.removeEventListener('resize', handleResize)
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('mousemove', onPointerMove)
+      window.removeEventListener('touchmove', onPointerMove)
       cancelAnimationFrame(animId)
     }
   }, [])
@@ -191,7 +165,7 @@ export default function FluidSmokeCursor() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-50 h-full w-full opacity-60 mix-blend-screen dark:mix-blend-screen select-none"
+      className="pointer-events-none fixed inset-0 z-50 h-full w-full select-none"
     />
   )
 }
