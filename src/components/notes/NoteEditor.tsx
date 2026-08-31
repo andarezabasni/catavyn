@@ -25,10 +25,10 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
   const [menuOpen, setMenuOpen] = useState(false)
 
   const wrapClasses: Record<WrapMode, string> = {
-    'inline': 'block my-3 clear-both max-w-full',
+    'inline': 'inline-block my-1.5 mr-2 align-top max-w-full',
     'square-left': 'float-left mr-4 mb-3 clear-left max-w-full z-10 relative',
     'square-right': 'float-right ml-4 mb-3 clear-right max-w-full z-10 relative',
-    'break': 'block my-4 clear-both w-full text-center',
+    'break': 'block my-3 clear-both w-full text-center',
     'behind': 'absolute inset-0 opacity-25 pointer-events-auto -z-10 object-cover w-full h-full select-none',
     'in-front': 'absolute top-4 left-4 z-20 shadow-2xl opacity-90',
   }
@@ -43,7 +43,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
         <img
           src={src}
           alt={alt || ''}
-          className="rounded-lg max-w-full h-auto object-contain cursor-pointer shadow-xs"
+          className="rounded-lg w-full h-auto object-contain cursor-pointer shadow-xs"
           onClick={() => setMenuOpen(prev => !prev)}
         />
 
@@ -52,7 +52,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
           {/* Alignment / Wrap menu */}
           <button
             type="button"
-            title="Inline block"
+            title="Inline / Side-by-side"
             onClick={() => { updateAttributes({ wrap: 'inline' }); setMenuOpen(false) }}
             className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'inline' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
@@ -93,20 +93,28 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
 
           <div className="w-px h-3 bg-border mx-0.5" />
 
-          {/* Quick Resizing */}
+          {/* Quick Resizing Presets */}
           <button
             type="button"
-            title="Small (25%)"
-            onClick={() => { updateAttributes({ width: '25%' }); setMenuOpen(false) }}
-            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+            title="Mini (20% - 5 col)"
+            onClick={() => { updateAttributes({ width: '18%', wrap: 'inline' }); setMenuOpen(false) }}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '18%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            XS
+          </button>
+          <button
+            type="button"
+            title="Small (30% - 3 col)"
+            onClick={() => { updateAttributes({ width: '31%', wrap: 'inline' }); setMenuOpen(false) }}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '31%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
             S
           </button>
           <button
             type="button"
-            title="Medium (50%)"
-            onClick={() => { updateAttributes({ width: '50%' }); setMenuOpen(false) }}
-            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+            title="Medium (48% - 2 col)"
+            onClick={() => { updateAttributes({ width: '48%', wrap: 'inline' }); setMenuOpen(false) }}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '48%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
             M
           </button>
@@ -114,7 +122,7 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
             type="button"
             title="Full (100%)"
             onClick={() => { updateAttributes({ width: '100%' }); setMenuOpen(false) }}
-            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '100%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
           >
             L
           </button>
