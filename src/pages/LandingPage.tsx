@@ -13,106 +13,106 @@ const FEATURES = [
   {
     icon: FileText,
     color: '#C4A84D',
-    title: 'Notes & sub-notes',
-    text: 'A calm, rich-text editor with headings, lists and checklists. Nest sub-notes to keep big topics tidy.',
+    title: 'Rich Notes & Nested Sub-notes',
+    text: 'Format with clean markdown, headers, checklists, and code blocks. Nest sub-notes to manage complex projects effortlessly.',
   },
   {
     icon: CheckSquare,
     color: '#6B8B6A',
-    title: 'Daily tasks',
-    text: 'Plan your day with a built-in task panel — due times, priorities, and a mini calendar at a glance.',
+    title: 'Daily Task Management',
+    text: 'Keep execution focused with priority tags, scheduled due times, and an integrated daily agenda calendar.',
   },
   {
     icon: FolderOpen,
     color: '#C4844D',
-    title: 'Categories & tags',
-    text: 'Organize the way you think. Color-coded categories and tags make everything findable in seconds.',
+    title: 'Visual Categories & Tags',
+    text: 'Structure notes through color-coded categories and custom tags for instant multi-filter search and discovery.',
   },
   {
     icon: Users,
     color: '#5B8B5A',
-    title: 'Collaboration',
-    text: 'Share a note with a friend or teammate. Edits sync in real time, with a full activity trail.',
+    title: 'Real-Time Collaboration',
+    text: 'Work synchronously with granular view or edit permissions and a transparent live activity audit trail.',
   },
   {
     icon: Lock,
     color: '#8B8B6A',
-    title: 'Private notes',
-    text: 'Lock sensitive notes behind a PIN. Your data is protected by row-level security on every request.',
+    title: 'PIN-Protected Privacy',
+    text: 'Lock confidential notes behind custom PIN security, reinforced with PostgreSQL Row Level Security (RLS).',
   },
   {
     icon: Download,
     color: '#C4A84D',
-    title: 'No lock-in',
-    text: 'Export any note to Markdown or PDF anytime. Import your existing .md files in one click.',
+    title: 'Markdown & PDF Portability',
+    text: 'Export notes to clean Markdown or PDF at any time. Import your existing notes with zero ecosystem lock-in.',
   },
   {
     icon: Bell,
     color: '#C4844D',
-    title: 'Task reminders',
-    text: 'Turn on browser notifications and Catavyn nudges you the moment a task is due.',
+    title: 'Proactive Due Date Reminders',
+    text: 'Receive browser and desktop notifications so high-priority deadlines and task schedules are never missed.',
   },
   {
     icon: Moon,
     color: '#6B8B6A',
-    title: 'Warm dark mode',
-    text: 'A cozy, paper-like theme by day and a warm, easy-on-the-eyes dark theme by night.',
+    title: 'Paper-Like & Warm Dark Theme',
+    text: 'Designed for deep focus, featuring a warm tactile aesthetic by day and an eye-friendly palette by night.',
   },
 ]
 
 const STEPS = [
   {
     icon: PenLine,
-    title: 'Capture',
-    text: 'Hit “New note” and just write. Autosave has your back — nothing is ever lost.',
+    title: 'Capture Ideas Instantly',
+    text: 'Start writing in seconds with automatic background syncing so you never lose a draft.',
   },
   {
     icon: Layers,
-    title: 'Organize',
-    text: 'Drop notes into categories, add colorful tags, and pin what matters most.',
+    title: 'Structure & Interlink',
+    text: 'Organize pages using nested sub-notes, category hierarchies, and customized tag filters.',
   },
   {
     icon: CalendarCheck,
-    title: 'Plan your day',
-    text: 'Add tasks with due times, check the mini calendar, and get reminded right on time.',
+    title: 'Execute & Track Progress',
+    text: 'Convert thoughts into actionable daily tasks, prioritize workloads, and receive on-time alerts.',
   },
 ]
 
 // Web-optimized JPEG variants (~100 KB each vs ~1.3 MB source PNGs)
 const SCREENSHOTS = [
-  { src: '/screenshot/2.jpg', alt: 'Catavyn home workspace with categories, reminders and pinned notes' },
-  { src: '/screenshot/4.jpg', alt: 'Catavyn warm dark mode' },
-  { src: '/screenshot/5.jpg', alt: 'Catavyn notes page with search and category filters' },
-  { src: '/screenshot/3.jpg', alt: 'Catavyn PIN-locked private notes' },
+  { src: '/screenshot/2.jpg', alt: 'Catavyn home dashboard with categorized notes, reminders, and pinned workspace' },
+  { src: '/screenshot/4.jpg', alt: 'Catavyn warm dark theme note editor interface' },
+  { src: '/screenshot/5.jpg', alt: 'Catavyn notes list view with full-text search and category filters' },
+  { src: '/screenshot/3.jpg', alt: 'Catavyn secure PIN-locked private notes modal' },
 ]
 
 const PROMISES = [
-  'Free forever — no premium wall',
-  'No ads, no tracking',
-  'Export your data anytime',
-  'Open source on GitHub',
+  '100% Free and open source',
+  'Zero advertisements or user tracking',
+  'Instant Markdown and PDF data export',
+  'Full offline desktop & browser support',
 ]
 
 const FAQS = [
   {
-    q: 'Is Catavyn really free?',
-    a: 'Yes — completely. There is no premium tier, no feature wall, and no ads. Catavyn is an open-source project; you can even read the code on GitHub.',
+    q: 'Is Catavyn completely free?',
+    a: 'Yes. There are no paywalls, hidden limits, or subscription tiers. Catavyn is an open-source productivity app released under the MIT license.',
   },
   {
-    q: 'Do I need to install anything?',
-    a: 'No. Catavyn runs in any modern browser. If you prefer a native app, there is also a free desktop version for Windows you can download from GitHub.',
+    q: 'Can I use Catavyn on desktop as well as web?',
+    a: 'Yes. Catavyn runs in modern web browsers and offers a native, lightweight Windows desktop app powered by Tauri.',
   },
   {
-    q: 'Is my data private?',
-    a: 'Your notes are stored in your own account and protected with row-level security — no one else can read them. You can additionally lock individual notes with a PIN.',
+    q: 'How is user data and note privacy protected?',
+    a: 'Your notes are isolated through Supabase Row-Level Security (RLS) policies. Individual sensitive documents can also be locked with a private PIN.',
   },
   {
-    q: 'Can I take my notes elsewhere?',
-    a: 'Anytime. Every note can be exported to Markdown or PDF, and you can import existing Markdown files too. Your notes are never held hostage.',
+    q: 'Can I migrate or export my notes anytime?',
+    a: 'Yes. You retain complete ownership of your data with one-click Markdown and PDF exports, alongside Markdown import capabilities.',
   },
   {
-    q: 'Can I work together with someone?',
-    a: 'Yes — invite a collaborator to any note by email. You control whether they can edit or just view, and changes sync in real time.',
+    q: 'How does real-time team collaboration work?',
+    a: 'You can share notes via email invite with customized edit or read-only permissions, syncing updates instantly across active sessions.',
   },
 ]
 
@@ -151,16 +151,14 @@ export default function LandingPage() {
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-5 pt-10 sm:pt-16 pb-12 sm:pb-16 text-center">
           <p className="inline-block rounded-full border border-border bg-bg-card px-3 py-1 text-xs font-medium text-text-secondary mb-5 sm:mb-6">
-            ✨ Free · Open source · Web &amp; Windows
+            Free &bull; Open Source &bull; Web &amp; Windows Desktop
           </p>
           <h1 className="font-display text-[2.1rem] leading-[1.15] sm:text-5xl md:text-6xl sm:leading-tight font-bold max-w-3xl mx-auto">
-            Your notes,{' '}
-            <span className="italic text-accent-gold">beautifully</span>{' '}
-            organized.
+            Note-taking and task planning,{' '}
+            <span className="italic text-accent-gold">distraction-free.</span>
           </h1>
           <p className="text-text-secondary text-[15px] sm:text-lg max-w-xl mx-auto mt-4 sm:mt-5 leading-relaxed">
-            Catavyn is a lightweight notes &amp; daily task app with a warm, paper-like feel.
-            No clutter, no lock-in, no price tag — just a calm place to think and plan.
+            Catavyn brings together structured markdown notes, nested sub-pages, and daily agenda planning in one warm, tactile workspace with zero lock-in.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mt-7 sm:mt-8 px-2 sm:px-0">
@@ -168,7 +166,7 @@ export default function LandingPage() {
               to="/register"
               className="flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-6 py-3 text-sm sm:text-base font-semibold text-white hover:opacity-90 transition-opacity shadow-sm"
             >
-              Start writing — it&rsquo;s free
+              Start Free Workspace
               <ArrowRight size={16} />
             </Link>
             <a
@@ -178,16 +176,16 @@ export default function LandingPage() {
               className="flex items-center justify-center gap-2 rounded-xl border border-border bg-bg-card px-6 py-3 text-sm sm:text-base font-semibold text-text-primary hover:border-accent-gold/60 transition-colors"
             >
               <Monitor size={16} />
-              Download for Windows
+              Download Windows App
             </a>
           </div>
-          <p className="text-text-muted text-xs mt-3">No credit card. No trial. Just sign up and write.</p>
+          <p className="text-text-muted text-xs mt-3">No subscriptions. No credit card required. Free forever.</p>
 
           {/* Hero screenshot */}
           <div className="mt-10 sm:mt-14 rounded-xl sm:rounded-2xl border border-border bg-bg-card shadow-xl overflow-hidden">
             <img
               src="/screenshot/1.jpg"
-              alt="Catavyn dashboard — notes, categories, reminders and pinned notes in one calm workspace"
+              alt="Catavyn note-taking dashboard with tasks, categories, reminders, and pinned documents"
               className="w-full h-auto block"
             />
           </div>
@@ -196,9 +194,9 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section className="max-w-5xl mx-auto px-4 sm:px-5 py-12 sm:py-16">
-        <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">How it works</p>
+        <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">Workflow</p>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-center">
-          Three steps to a clearer head.
+          Engineered for focus and clarity.
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-10">
           {STEPS.map(({ icon: Icon, title, text }, i) => (
@@ -218,12 +216,12 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="max-w-5xl mx-auto px-4 sm:px-5 py-12 sm:py-16">
-        <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">Features</p>
+        <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">Capabilities</p>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-center">
-          Everything you need. Nothing you don&rsquo;t.
+          Essential tools for productive thinkers.
         </h2>
         <p className="text-text-secondary text-center mt-3 max-w-lg mx-auto text-sm sm:text-base">
-          Catavyn isn&rsquo;t trying to be everything. It does notes, tasks and organization — done well.
+          A focused workspace uniting rich markdown documents, hierarchical organization, and scheduled task management.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 mt-8 sm:mt-10">
           {FEATURES.map(({ icon: Icon, color, title, text }) => (
@@ -247,9 +245,9 @@ export default function LandingPage() {
       {/* Screenshot gallery — swipeable on mobile */}
       <section className="py-12 sm:py-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-5">
-          <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">Screenshots</p>
+          <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">Interface</p>
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-center">
-            See it in action.
+            Designed for thoughtful productivity.
           </h2>
           <p className="text-text-muted text-xs text-center mt-2 sm:hidden">Swipe to browse →</p>
         </div>
@@ -272,12 +270,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-7 sm:gap-8">
             <div className="flex-1">
               <h2 className="font-display text-2xl sm:text-3xl font-bold">
-                Your notes belong to you.
+                Your data remains completely yours.
               </h2>
               <p className="text-white/70 text-sm mt-3 leading-relaxed max-w-md">
-                Most note apps hold your data hostage behind subscriptions and proprietary formats.
-                Catavyn is free, open source, and exports clean Markdown — so you can leave anytime.
-                We think that&rsquo;s exactly why you&rsquo;ll stay.
+                Unlike walled-garden note platforms, Catavyn protects your privacy and outputs universal Markdown. Keep complete control of your thoughts, documents, and workflows at all times.
               </p>
             </div>
             <ul className="flex flex-col gap-3">
@@ -298,7 +294,7 @@ export default function LandingPage() {
       <section className="max-w-2xl mx-auto px-4 sm:px-5 py-12 sm:py-16">
         <p className="text-accent-gold text-xs font-semibold uppercase tracking-widest text-center mb-2">FAQ</p>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-center mb-7 sm:mb-9">
-          Questions, answered.
+          Frequently Asked Questions
         </h2>
         <div className="flex flex-col gap-3">
           {FAQS.map(({ q, a }) => (
@@ -323,15 +319,15 @@ export default function LandingPage() {
         </div>
         <div className="relative">
           <h2 className="font-display text-2xl sm:text-4xl font-bold">
-            Ready for a calmer way to take notes?
+            Upgrade your daily thinking and note-taking routine.
           </h2>
-          <p className="text-text-secondary mt-3">Set up takes less than a minute.</p>
+          <p className="text-text-secondary mt-3">Start organized, private note-taking in seconds.</p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mt-7 px-2 sm:px-0">
             <Link
               to="/register"
               className="flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-6 py-3 text-sm sm:text-base font-semibold text-white hover:opacity-90 transition-opacity shadow-sm"
             >
-              Create your free account
+              Get Started for Free
               <ArrowRight size={16} />
             </Link>
             <a
@@ -341,7 +337,7 @@ export default function LandingPage() {
               className="flex items-center justify-center gap-2 rounded-xl border border-border bg-bg-card px-6 py-3 text-sm sm:text-base font-semibold text-text-primary hover:border-accent-gold/60 transition-colors"
             >
               <Monitor size={16} />
-              Get the Windows app
+              Get Windows App
             </a>
           </div>
         </div>
@@ -355,7 +351,7 @@ export default function LandingPage() {
               <img src={appLogo} alt="" className="w-6 h-6 object-contain" />
               <span className="font-display text-sm font-bold tracking-wide">CATAVYN</span>
             </div>
-            <span className="text-text-muted text-xs sm:ml-2">Notes &amp; daily tasks, done calmly.</span>
+            <span className="text-text-muted text-xs sm:ml-2">Privacy-focused note-taking &amp; daily task management.</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-text-muted">
             <Link to="/login" className="hover:text-text-primary transition-colors">Sign in</Link>
