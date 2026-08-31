@@ -36,14 +36,17 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
   return (
     <NodeViewWrapper
       as="span"
-      className={`relative inline-block group image-node-wrapper ${wrapClasses[wrap as WrapMode] || wrapClasses.inline} ${selected ? 'ring-2 ring-accent-gold rounded-lg' : ''}`}
+      data-drag-handle
+      draggable="true"
+      className={`relative inline-block group image-node-wrapper select-none ${wrapClasses[wrap as WrapMode] || wrapClasses.inline} ${selected ? 'ring-2 ring-accent-gold rounded-lg' : ''}`}
       style={{ width: wrap === 'behind' ? '100%' : width }}
     >
       <div className="relative inline-block w-full">
         <img
           src={src}
           alt={alt || ''}
-          className="rounded-lg w-full h-auto object-contain cursor-grab active:cursor-grabbing shadow-xs"
+          draggable={false}
+          className="rounded-lg w-full h-auto object-contain cursor-grab active:cursor-grabbing shadow-xs pointer-events-auto select-none"
         />
 
         {/* Drag handle pill in top-left (visible on CSS hover) */}
@@ -420,12 +423,21 @@ export default function NoteEditor({
         }
         return false
       },
-      handleDrop: (_view, event, _slice, moved) => {
-        // If an existing image node is being dragged & dropped within the editor, let ProseMirror move it
+      handleDrop: (_view, event, slice, moved) => {
+        // If it's already an internal move by ProseMirror
         if (moved) return false
 
-        // Check if there is internal ProseMirror drag data (moving node inside editor)
-        if (event.dataTransfer?.types.includes('text/html') || event.dataTransfer?.types.includes('prosemirror/node')) {
+        // If slice has content (an existing node dragged from the document), move it properly by deleting source
+        if (slice && slice.size > 0) {
+          const files = event.dataTransfer?.files
+          // Only if no external files are attached
+          if (!files || files.length === 0) {
+            return false
+          }
+        }
+
+        // Check if there is internal ProseMirror drag data or HTML drag from same document
+        if (event.dataTransfer?.getData('text/html') || event.dataTransfer?.types.includes('prosemirror/node')) {
           return false
         }
 
