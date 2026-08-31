@@ -1,25 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 
-interface Particle {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  size: number
-  baseSize: number
-  alpha: number
-  maxAlpha: number
-  life: number
-  maxLife: number
-  rotation: number
-  vRot: number
-  r: number
-  g: number
-  b: number
-  isShockwave?: boolean
-}
-
 export default function FluidSmokeCursor() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { isDark } = useTheme()
@@ -32,210 +13,177 @@ export default function FluidSmokeCursor() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d', { alpha: true })
-    if (!ctx) return
+    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null
+    if (!gl) return
 
-    let animationFrameId: number
-    let width = (canvas.width = window.innerWidth)
-    let height = (canvas.height = window.innerHeight)
+    let width = (canvas.width = Math.floor(window.innerWidth / 2))
+    let height = (canvas.height = Math.floor(window.innerHeight / 2))
 
     const handleResize = () => {
       if (!canvas) return
-      width = canvas.width = window.innerWidth
-      height = canvas.height = window.innerHeight
+      width = canvas.width = Math.floor(window.innerWidth / 2)
+      height = canvas.height = Math.floor(window.innerHeight / 2)
+      gl.viewport(0, 0, width, height)
     }
     window.addEventListener('resize', handleResize)
 
-    // Palette Catavyn: warm gold, subtle sage green, warm paper mist
-    const lightPalette = [
-      { r: 196, g: 168, b: 77 }, // accent-gold (#C4A84D)
-      { r: 107, g: 139, b: 106 }, // accent-green (#6B8B6A)
-      { r: 196, g: 132, b: 77 }, // tag-personal warm orange (#C4844D)
-      { r: 168, g: 155, b: 140 }, // paper smoke (#A89B8C)
-    ]
+    // Minimal high-performance fluid shader
+    const vertShaderSrc = `
+      attribute vec2 a_pos;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = a_pos * 0.5 + 0.5;
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+      }
+    `
 
-    const darkPalette = [
-      { r: 218, g: 188, b: 95 }, // glowing gold
-      { r: 130, g: 170, b: 130 }, // luminous sage
-      { r: 225, g: 160, b: 105 }, // ember
-      { r: 180, g: 170, b: 160 }, // moonlight mist
-    ]
+    const fragShaderSrc = `
+      precision highp float;
+      varying vec2 v_uv;
+      uniform sampler2D u_tex;
+      uniform vec2 u_mouse;
+      uniform vec2 u_vel;
+      uniform float u_time;
+      uniform vec3 u_color;
+      uniform float u_decay;
+      uniform float u_aspect;
 
-    const particles: Particle[] = []
-    const MAX_PARTICLES = 160
+      void main() {
+        vec2 uv = v_uv;
+        // Advect with slight curl distortion
+        vec2 offset = texture2D(u_tex, uv).xy * 0.003;
+        vec4 prev = texture2D(u_tex, uv - offset) * u_decay;
 
+        // Splat at mouse
+        vec2 m = u_mouse;
+        vec2 diff = (uv - m);
+        diff.x *= u_aspect;
+        float d = length(diff);
+        float splat = exp(-d * d * 800.0) * length(u_vel) * 0.08;
+
+        vec3 col = prev.rgb + u_color * splat;
+        gl_FragColor = vec4(col, max(prev.a * u_decay, splat * 1.5));
+      }
+    `
+
+    function createShader(glCtx: WebGLRenderingContext, type: number, src: string) {
+      const shader = glCtx.createShader(type)!
+      glCtx.shaderSource(shader, src)
+      glCtx.compileShader(shader)
+      return shader
+    }
+
+    const program = gl.createProgram()!
+    gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vertShaderSrc))
+    gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc))
+    gl.linkProgram(program)
+    gl.useProgram(program)
+
+    // Fullscreen quad
+    const quadBuf = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW)
+    const aPos = gl.getAttribLocation(program, 'a_pos')
+    gl.enableVertexAttribArray(aPos)
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0)
+
+    // Double buffer FBOs for silky ping-pong fluid persistence
+    function createFBO() {
+      const tex = gl!.createTexture()!
+      gl!.bindTexture(gl!.TEXTURE_2D, tex)
+      gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA, width, height, 0, gl!.RGBA, gl!.UNSIGNED_BYTE, null)
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR)
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR)
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE)
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE)
+
+      const fbo = gl!.createFramebuffer()!
+      gl!.bindFramebuffer(gl!.FRAMEBUFFER, fbo)
+      gl!.framebufferTexture2D(gl!.FRAMEBUFFER, gl!.COLOR_ATTACHMENT0, gl!.TEXTURE_2D, tex, 0)
+      return { fbo, tex }
+    }
+
+    let fbo1 = createFBO()
+    let fbo2 = createFBO()
+
+    const uTex = gl.getUniformLocation(program, 'u_tex')
+    const uMouse = gl.getUniformLocation(program, 'u_mouse')
+    const uVel = gl.getUniformLocation(program, 'u_vel')
+    const uColor = gl.getUniformLocation(program, 'u_color')
+    const uDecay = gl.getUniformLocation(program, 'u_decay')
+    const uAspect = gl.getUniformLocation(program, 'u_aspect')
+
+    let mouseX = 0.5
+    let mouseY = 0.5
+    let velX = 0
+    let velY = 0
     let lastX = 0
     let lastY = 0
-    let lastTime = performance.now()
 
-    function spawnSmoke(x: number, y: number, vx: number, vy: number, speed: number) {
-      const isHighVelocity = speed > 22
-      const count = isHighVelocity ? 6 : Math.min(3, Math.max(1, Math.floor(speed / 4)))
-      const palette = isDarkRef.current ? darkPalette : lightPalette
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      const cx = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const cy = 'touches' in e ? e.touches[0].clientY : e.clientY
 
-      for (let i = 0; i < count; i++) {
-        if (particles.length >= MAX_PARTICLES) particles.shift()
+      const curX = cx / window.innerWidth
+      const curY = 1.0 - cy / window.innerHeight
 
-        const color = palette[Math.floor(Math.random() * palette.length)]
-        const angle = Math.random() * Math.PI * 2
-        // Spread based on movement direction
-        const spreadSpeed = (Math.random() * 1.5 + 0.5) * (isHighVelocity ? 2.5 : 1)
-        const spreadX = Math.cos(angle) * spreadSpeed + vx * 0.15
-        const spreadY = Math.sin(angle) * spreadSpeed + vy * 0.15 - 0.2 // subtle upward draft
-
-        const baseSize = isHighVelocity
-          ? Math.random() * 26 + 18
-          : Math.random() * 14 + 10
-
-        const maxLife = isHighVelocity ? Math.random() * 35 + 25 : Math.random() * 25 + 18
-        const maxAlpha = isHighVelocity
-          ? isDarkRef.current ? 0.35 : 0.28
-          : isDarkRef.current ? 0.22 : 0.16
-
-        particles.push({
-          x: x + (Math.random() - 0.5) * 8,
-          y: y + (Math.random() - 0.5) * 8,
-          vx: spreadX,
-          vy: spreadY,
-          size: baseSize * 0.4,
-          baseSize,
-          alpha: maxAlpha,
-          maxAlpha,
-          life: 0,
-          maxLife,
-          rotation: Math.random() * Math.PI * 2,
-          vRot: (Math.random() - 0.5) * 0.04,
-          r: color.r,
-          g: color.g,
-          b: color.b,
-          isShockwave: isHighVelocity,
-        })
-      }
-
-      // If high velocity flick (hentakan cepat), spawn radiating shockwave ring particles
-      if (isHighVelocity) {
-        const ringCount = 8
-        for (let i = 0; i < ringCount; i++) {
-          if (particles.length >= MAX_PARTICLES) particles.shift()
-          const ringAngle = (i / ringCount) * Math.PI * 2 + Math.random() * 0.2
-          const ringSpeed = Math.random() * 3 + 3.5
-          const goldColor = palette[0]
-
-          particles.push({
-            x,
-            y,
-            vx: Math.cos(ringAngle) * ringSpeed + vx * 0.2,
-            vy: Math.sin(ringAngle) * ringSpeed + vy * 0.2,
-            size: Math.random() * 10 + 6,
-            baseSize: Math.random() * 18 + 12,
-            alpha: isDarkRef.current ? 0.4 : 0.3,
-            maxAlpha: isDarkRef.current ? 0.4 : 0.3,
-            life: 0,
-            maxLife: 20,
-            rotation: 0,
-            vRot: 0,
-            r: goldColor.r,
-            g: goldColor.g,
-            b: goldColor.b,
-            isShockwave: true,
-          })
-        }
-      }
+      velX = (curX - lastX) * 50
+      velY = (curY - lastY) * 50
+      mouseX = curX
+      mouseY = curY
+      lastX = curX
+      lastY = curY
     }
 
-    const onPointerMove = (e: MouseEvent | TouchEvent) => {
-      const now = performance.now()
-      const dt = Math.max(1, now - lastTime)
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    window.addEventListener('mousemove', onMove, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: true })
 
-      if (lastX === 0 && lastY === 0) {
-        lastX = clientX
-        lastY = clientY
-        lastTime = now
-        return
-      }
+    let animId: number
 
-      const dx = clientX - lastX
-      const dy = clientY - lastY
-      const dist = Math.hypot(dx, dy)
-      const speed = (dist / dt) * 16.67 // normalized speed per 60fps frame
-
-      const vx = dx / (dt / 16.67)
-      const vy = dy / (dt / 16.67)
-
-      // Interpolate points for silky continuous smoke stream
-      const steps = Math.min(6, Math.max(1, Math.floor(dist / 8)))
-      for (let s = 1; s <= steps; s++) {
-        const ratio = s / steps
-        const ix = lastX + dx * ratio
-        const iy = lastY + dy * ratio
-        spawnSmoke(ix, iy, vx, vy, speed)
-      }
-
-      lastX = clientX
-      lastY = clientY
-      lastTime = now
-    }
-
-    window.addEventListener('mousemove', onPointerMove, { passive: true })
-    window.addEventListener('touchmove', onPointerMove, { passive: true })
-
-    // Render loop
     const render = () => {
-      ctx.clearRect(0, 0, width, height)
+      // Damping velocity
+      velX *= 0.88
+      velY *= 0.88
 
-      // Render smoke puff particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]
-        p.life++
+      // Palette: Warm Gold / Subtle Sage
+      const color = isDarkRef.current
+        ? [0.77, 0.66, 0.30] // Glowing Gold in dark mode
+        : [0.65, 0.55, 0.28] // Warm refined parchment gold
 
-        if (p.life >= p.maxLife) {
-          particles.splice(i, 1)
-          continue
-        }
+      // Step 1: Render into FBO2 reading from FBO1
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo2.fbo)
+      gl.viewport(0, 0, width, height)
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, fbo1.tex)
+      gl.uniform1i(uTex, 0)
+      gl.uniform2f(uMouse, mouseX, mouseY)
+      gl.uniform2f(uVel, velX, velY)
+      gl.uniform3f(uColor, color[0], color[1], color[2])
+      gl.uniform1f(uDecay, 0.955)
+      gl.uniform1f(uAspect, width / height)
+      gl.drawArrays(gl.TRIANGLES, 0, 6)
 
-        // Physics: friction and buoyant drift
-        p.x += p.vx
-        p.y += p.vy
-        p.vx *= 0.94
-        p.vy *= 0.94
-        p.rotation += p.vRot
+      // Step 2: Render to screen
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+      gl.viewport(0, 0, width, height)
+      gl.bindTexture(gl.TEXTURE_2D, fbo2.tex)
+      gl.drawArrays(gl.TRIANGLES, 0, 6)
 
-        const progress = p.life / p.maxLife
-        // Expand puff as it disperses
-        p.size = p.baseSize * (0.5 + progress * 1.5)
-        // Smooth fade out
-        const currentAlpha = p.maxAlpha * (1 - Math.pow(progress, 1.2))
+      // Swap buffers
+      const temp = fbo1
+      fbo1 = fbo2
+      fbo2 = temp
 
-        ctx.save()
-        ctx.translate(p.x, p.y)
-        ctx.rotate(p.rotation)
-
-        // Radial gradient for realistic soft volumetric smoke puff
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size)
-        grad.addColorStop(0, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha})`)
-        grad.addColorStop(0.45, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha * 0.6})`)
-        grad.addColorStop(0.8, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha * 0.15})`)
-        grad.addColorStop(1, `rgba(${p.r}, ${p.g}, ${p.b}, 0)`)
-
-        ctx.fillStyle = grad
-        ctx.beginPath()
-        ctx.arc(0, 0, p.size, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.restore()
-      }
-
-      animationFrameId = requestAnimationFrame(render)
+      animId = requestAnimationFrame(render)
     }
 
     render()
 
     return () => {
       window.removeEventListener('resize', handleResize)
-      window.removeEventListener('mousemove', onPointerMove)
-      window.removeEventListener('touchmove', onPointerMove)
-      cancelAnimationFrame(animationFrameId)
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('touchmove', onMove)
+      cancelAnimationFrame(animId)
     }
   }, [])
 
@@ -243,7 +191,7 @@ export default function FluidSmokeCursor() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-50 h-full w-full select-none"
+      className="pointer-events-none fixed inset-0 z-50 h-full w-full opacity-60 mix-blend-screen dark:mix-blend-screen select-none"
     />
   )
 }
