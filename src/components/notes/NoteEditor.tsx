@@ -10,7 +10,7 @@ import {
   Lock, LockOpen, Bold, Strikethrough, Heading1, Heading2, List, ListOrdered,
   CheckSquare, FileText, ChevronRight, Users, RefreshCw, Download,
   Image as ImageIcon, AlignLeft, AlignCenter, AlignRight, Layout,
-  Type, GripVertical,
+  Type, GripVertical, Maximize2,
 } from 'lucide-react'
 import { exportNoteAsMarkdown, exportNoteAsPdf } from '../../lib/markdown'
 import type { Category } from '../../hooks/useCategories'
@@ -22,7 +22,7 @@ type WrapMode = 'inline' | 'square-left' | 'square-right' | 'break' | 'behind' |
 
 function ResizableImageComponent({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
   const { src, alt, wrap = 'inline', width = '100%' } = node.attrs
-  const [isHovered, setIsHovered] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const wrapClasses: Record<WrapMode, string> = {
     'inline': 'inline-block my-1.5 mr-2 align-top max-w-full',
@@ -38,129 +38,158 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
       as="span"
       className={`relative inline-block group image-node-wrapper ${wrapClasses[wrap as WrapMode] || wrapClasses.inline} ${selected ? 'ring-2 ring-accent-gold rounded-lg' : ''}`}
       style={{ width: wrap === 'behind' ? '100%' : width }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative inline-block w-full">
         <img
           src={src}
           alt={alt || ''}
-          draggable={false}
-          className="rounded-lg w-full h-auto object-contain cursor-pointer shadow-xs select-none"
+          className="rounded-lg w-full h-auto object-contain cursor-grab active:cursor-grabbing shadow-xs"
         />
 
-        {/* Drag handle handle (bullet grip icon to drag image anywhere) */}
-        {isHovered && (
-          <div
-            data-drag-handle
-            title="Drag to reposition image"
-            className="absolute top-2 left-2 bg-bg-card/90 backdrop-blur-xs border border-border rounded-md shadow-xs p-1 cursor-grab active:cursor-grabbing text-text-secondary hover:text-accent-gold z-30 flex items-center justify-center"
+        {/* Drag handle pill in top-left (visible on CSS hover) */}
+        <div
+          data-drag-handle
+          title="Drag to reposition image anywhere"
+          className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 left-2 bg-bg-card/90 backdrop-blur-xs border border-border rounded-md shadow-xs p-1 cursor-grab active:cursor-grabbing text-text-secondary hover:text-accent-gold z-30 flex items-center justify-center pointer-events-auto"
+        >
+          <GripVertical size={14} />
+        </div>
+
+        {/* Floating image format pill — visible on CSS hover */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 bg-bg-card/95 backdrop-blur-xs border border-border rounded-lg shadow-md p-1 flex items-center gap-1 z-30 pointer-events-auto">
+          {/* Zoom / Full Preview modal button */}
+          <button
+            type="button"
+            title="Preview full size image"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => setLightboxOpen(true)}
+            className="p-1 rounded hover:bg-bg-page text-xs text-text-secondary hover:text-accent-gold"
           >
-            <GripVertical size={14} />
-          </div>
-        )}
+            <Maximize2 size={13} />
+          </button>
 
-        {/* Floating image format pill — Only visible on hover over image */}
-        {isHovered && (
-          <div className="absolute top-2 right-2 bg-bg-card/95 backdrop-blur-xs border border-border rounded-lg shadow-md p-1 flex items-center gap-1 z-30 animate-fade-up">
-            {/* Alignment / Wrap menu */}
-            <button
-              type="button"
-              title="Inline / Side-by-side"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ wrap: 'inline' })}
-              className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'inline' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              <AlignCenter size={13} />
-            </button>
-            <button
-              type="button"
-              title="Square Left (Float Left)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ wrap: 'square-left' })}
-              className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-left' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              <AlignLeft size={13} />
-            </button>
-            <button
-              type="button"
-              title="Square Right (Float Right)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ wrap: 'square-right' })}
-              className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-right' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              <AlignRight size={13} />
-            </button>
-            <button
-              type="button"
-              title="Full Break"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ wrap: 'break', width: '100%' })}
-              className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'break' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              <Layout size={13} />
-            </button>
-            <button
-              type="button"
-              title="Behind text (Watermark)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ wrap: 'behind' })}
-              className={`px-1 py-0.5 rounded hover:bg-bg-page text-[10px] ${wrap === 'behind' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-muted'}`}
-            >
-              Behind
-            </button>
+          <div className="w-px h-3 bg-border mx-0.5" />
 
-            <div className="w-px h-3 bg-border mx-0.5" />
+          {/* Alignment / Wrap menu */}
+          <button
+            type="button"
+            title="Inline / Side-by-side"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ wrap: 'inline' })}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'inline' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignCenter size={13} />
+          </button>
+          <button
+            type="button"
+            title="Square Left (Float Left)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ wrap: 'square-left' })}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-left' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignLeft size={13} />
+          </button>
+          <button
+            type="button"
+            title="Square Right (Float Right)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ wrap: 'square-right' })}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-right' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignRight size={13} />
+          </button>
+          <button
+            type="button"
+            title="Full Break"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ wrap: 'break', width: '100%' })}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'break' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <Layout size={13} />
+          </button>
+          <button
+            type="button"
+            title="Behind text (Watermark)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ wrap: 'behind' })}
+            className={`px-1 py-0.5 rounded hover:bg-bg-page text-[10px] ${wrap === 'behind' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-muted'}`}
+          >
+            Behind
+          </button>
 
-            {/* Quick Resizing Presets */}
-            <button
-              type="button"
-              title="Mini (20% - 5 col)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ width: '18%', wrap: 'inline' })}
-              className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '18%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              XS
-            </button>
-            <button
-              type="button"
-              title="Small (30% - 3 col)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ width: '31%', wrap: 'inline' })}
-              className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '31%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              S
-            </button>
-            <button
-              type="button"
-              title="Medium (48% - 2 col)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ width: '48%', wrap: 'inline' })}
-              className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '48%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              M
-            </button>
-            <button
-              type="button"
-              title="Full (100%)"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => updateAttributes({ width: '100%' })}
-              className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '100%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
-            >
-              L
-            </button>
+          <div className="w-px h-3 bg-border mx-0.5" />
 
-            <div className="w-px h-3 bg-border mx-0.5" />
+          {/* Quick Resizing Presets */}
+          <button
+            type="button"
+            title="Mini (20% - 5 col)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ width: '18%', wrap: 'inline' })}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '18%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            XS
+          </button>
+          <button
+            type="button"
+            title="Small (30% - 3 col)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ width: '31%', wrap: 'inline' })}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '31%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            S
+          </button>
+          <button
+            type="button"
+            title="Medium (48% - 2 col)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ width: '48%', wrap: 'inline' })}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '48%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            M
+          </button>
+          <button
+            type="button"
+            title="Full (100%)"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => updateAttributes({ width: '100%' })}
+            className={`px-1 py-0.5 rounded text-[10px] hover:bg-bg-page ${width === '100%' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            L
+          </button>
 
-            <button
-              type="button"
-              title="Delete image"
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => deleteNode()}
-              className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <Trash2 size={13} />
-            </button>
+          <div className="w-px h-3 bg-border mx-0.5" />
+
+          <button
+            type="button"
+            title="Delete image"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => deleteNode()}
+            className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+
+        {/* Lightbox / Zoom modal */}
+        {lightboxOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 cursor-zoom-out"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <div className="relative max-w-5xl max-h-[90vh] flex flex-col items-center">
+              <img
+                src={src}
+                alt={alt || 'Full preview'}
+                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+              />
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(false)}
+                className="absolute top-2 right-2 bg-bg-card/90 text-text-primary rounded-full p-2 hover:bg-bg-card shadow-md"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
         )}
       </div>
