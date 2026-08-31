@@ -641,7 +641,7 @@ export default function NoteEditor({
       </div>
 
       {/* Writing area */}
-      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8 max-w-3xl mx-auto w-full">
+      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-8 max-w-5xl mx-auto w-full">
         <input
           ref={titleRef}
           type="text"
