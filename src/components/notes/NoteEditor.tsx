@@ -1,18 +1,163 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
+import type { NodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import Image from '@tiptap/extension-image'
 import {
   ArrowLeft, Check, Trash2, Pin, ChevronDown, FolderOpen, X, Plus,
   Lock, LockOpen, Bold, Heading1, Heading2, List, ListOrdered,
   CheckSquare, FileText, ChevronRight, Users, RefreshCw, Download,
+  Image as ImageIcon, AlignLeft, AlignCenter, AlignRight, Layout,
 } from 'lucide-react'
 import { exportNoteAsMarkdown, exportNoteAsPdf } from '../../lib/markdown'
 import type { Category } from '../../hooks/useCategories'
 import type { Tag } from '../../hooks/useTags'
 import type { Note } from '../../hooks/useNotes'
 import { useNoteRealtime } from '../../hooks/useNoteRealtime'
+
+type WrapMode = 'inline' | 'square-left' | 'square-right' | 'break' | 'behind' | 'in-front'
+
+function ResizableImageComponent({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
+  const { src, alt, wrap = 'inline', width = '100%' } = node.attrs
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const wrapClasses: Record<WrapMode, string> = {
+    'inline': 'block my-3 clear-both max-w-full',
+    'square-left': 'float-left mr-4 mb-3 clear-left max-w-full z-10 relative',
+    'square-right': 'float-right ml-4 mb-3 clear-right max-w-full z-10 relative',
+    'break': 'block my-4 clear-both w-full text-center',
+    'behind': 'absolute inset-0 opacity-25 pointer-events-auto -z-10 object-cover w-full h-full select-none',
+    'in-front': 'absolute top-4 left-4 z-20 shadow-2xl opacity-90',
+  }
+
+  return (
+    <NodeViewWrapper
+      as="span"
+      className={`relative inline-block group image-node-wrapper ${wrapClasses[wrap as WrapMode] || wrapClasses.inline} ${selected ? 'ring-2 ring-accent-gold rounded-lg' : ''}`}
+      style={{ width: wrap === 'behind' ? '100%' : width }}
+    >
+      <div className="relative inline-block w-full">
+        <img
+          src={src}
+          alt={alt || ''}
+          className="rounded-lg max-w-full h-auto object-contain cursor-pointer shadow-xs"
+          onClick={() => setMenuOpen(prev => !prev)}
+        />
+
+        {/* Floating image format pill */}
+        <div className={`absolute top-2 right-2 bg-bg-card/95 backdrop-blur-xs border border-border rounded-lg shadow-md p-1 items-center gap-1 z-30 ${menuOpen ? 'flex' : 'hidden group-hover:flex'}`}>
+          {/* Alignment / Wrap menu */}
+          <button
+            type="button"
+            title="Inline block"
+            onClick={() => { updateAttributes({ wrap: 'inline' }); setMenuOpen(false) }}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'inline' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignCenter size={13} />
+          </button>
+          <button
+            type="button"
+            title="Square Left (Float Left)"
+            onClick={() => { updateAttributes({ wrap: 'square-left' }); setMenuOpen(false) }}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-left' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignLeft size={13} />
+          </button>
+          <button
+            type="button"
+            title="Square Right (Float Right)"
+            onClick={() => { updateAttributes({ wrap: 'square-right' }); setMenuOpen(false) }}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'square-right' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <AlignRight size={13} />
+          </button>
+          <button
+            type="button"
+            title="Full Break"
+            onClick={() => { updateAttributes({ wrap: 'break', width: '100%' }); setMenuOpen(false) }}
+            className={`p-1 rounded hover:bg-bg-page text-xs ${wrap === 'break' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-secondary'}`}
+          >
+            <Layout size={13} />
+          </button>
+          <button
+            type="button"
+            title="Behind text (Watermark)"
+            onClick={() => { updateAttributes({ wrap: 'behind' }); setMenuOpen(false) }}
+            className={`px-1 py-0.5 rounded hover:bg-bg-page text-[10px] ${wrap === 'behind' ? 'text-accent-gold font-bold bg-accent-gold/10' : 'text-text-muted'}`}
+          >
+            Behind
+          </button>
+
+          <div className="w-px h-3 bg-border mx-0.5" />
+
+          {/* Quick Resizing */}
+          <button
+            type="button"
+            title="Small (25%)"
+            onClick={() => { updateAttributes({ width: '25%' }); setMenuOpen(false) }}
+            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+          >
+            S
+          </button>
+          <button
+            type="button"
+            title="Medium (50%)"
+            onClick={() => { updateAttributes({ width: '50%' }); setMenuOpen(false) }}
+            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+          >
+            M
+          </button>
+          <button
+            type="button"
+            title="Full (100%)"
+            onClick={() => { updateAttributes({ width: '100%' }); setMenuOpen(false) }}
+            className="px-1 py-0.5 rounded text-[10px] text-text-secondary hover:bg-bg-page"
+          >
+            L
+          </button>
+
+          <div className="w-px h-3 bg-border mx-0.5" />
+
+          <button
+            type="button"
+            title="Delete image"
+            onClick={() => deleteNode()}
+            className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </NodeViewWrapper>
+  )
+}
+
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      wrap: {
+        default: 'inline',
+        parseHTML: element => element.getAttribute('data-wrap') || 'inline',
+        renderHTML: attributes => ({
+          'data-wrap': attributes.wrap,
+        }),
+      },
+      width: {
+        default: '100%',
+        parseHTML: element => element.getAttribute('data-width') || '100%',
+        renderHTML: attributes => ({
+          'data-width': attributes.width,
+        }),
+      },
+    }
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ResizableImageComponent)
+  },
+})
 
 interface NoteEditorProps {
   initialTitle?: string
@@ -96,6 +241,22 @@ export default function NoteEditor({
     !allTags.some(t => t.name.toLowerCase() === tagSearch.trim().toLowerCase()) &&
     !!onTagCreate
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null)
+
+  const handleImageFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64 = reader.result as string
+      if (base64 && editorRef.current) {
+        editorRef.current.chain().focus().setImage({ src: base64 }).run()
+      }
+    }
+    reader.readAsDataURL(file)
+  }, [])
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -105,15 +266,47 @@ export default function NoteEditor({
       }),
       TaskList,
       TaskItem.configure({ nested: false }),
+      CustomImage.configure({
+        allowBase64: true,
+      }),
     ],
     content: initialContent || '',
     editorProps: {
       attributes: {
         class: 'prose-editor focus:outline-none',
       },
+      handlePaste: (_view, event) => {
+        const items = event.clipboardData?.items
+        if (items) {
+          for (const item of Array.from(items)) {
+            if (item.type.indexOf('image') === 0) {
+              const file = item.getAsFile()
+              if (file) {
+                handleImageFile(file)
+                return true
+              }
+            }
+          }
+        }
+        return false
+      },
+      handleDrop: (_view, event, _slice, moved) => {
+        if (!moved && event.dataTransfer?.files?.length) {
+          const file = event.dataTransfer.files[0]
+          if (file.type.startsWith('image/')) {
+            handleImageFile(file)
+            return true
+          }
+        }
+        return false
+      },
     },
     onUpdate: () => autosaveTriggerRef.current(),
   })
+
+  useEffect(() => {
+    editorRef.current = editor
+  }, [editor])
 
   useNoteRealtime(noteId ?? null, useCallback(({ title: remoteTitle, content: remoteContent }) => {
     setTitle(remoteTitle)
@@ -643,6 +836,32 @@ export default function NoteEditor({
             aria-label="Checklist"
           >
             <CheckSquare size={14} />
+          </button>
+
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* Insert Image Button */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) {
+                handleImageFile(file)
+                e.target.value = ''
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="rounded-lg p-1.5 transition-colors text-text-muted hover:text-text-secondary hover:bg-bg-card"
+            title="Upload/Insert Image"
+            aria-label="Upload Image"
+          >
+            <ImageIcon size={14} />
           </button>
 
           <div className="hidden sm:flex items-center gap-1 ml-1">

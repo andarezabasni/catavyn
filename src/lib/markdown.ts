@@ -16,6 +16,11 @@ function inlineToMd(node: Node): string {
   if (!(node instanceof Element)) return ''
   const inner = Array.from(node.childNodes).map(inlineToMd).join('')
   switch (node.tagName) {
+    case 'IMG': {
+      const src = node.getAttribute('src') || ''
+      const alt = node.getAttribute('alt') || ''
+      return `![${alt}](${src})`
+    }
     case 'STRONG':
     case 'B':
       return inner ? `**${inner}**` : ''
@@ -101,6 +106,7 @@ export function htmlToMarkdown(html: string): string {
 
 function inlineToHtml(s: string): string {
   let t = escapeHtml(s)
+  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>')
   t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   t = t.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
