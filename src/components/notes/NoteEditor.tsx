@@ -43,7 +43,8 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
         <img
           src={src}
           alt={alt || ''}
-          className="rounded-lg w-full h-auto object-contain cursor-pointer shadow-xs"
+          draggable={false}
+          className="rounded-lg w-full h-auto object-contain cursor-pointer shadow-xs select-none"
           onClick={() => setMenuOpen(prev => !prev)}
         />
 
@@ -153,10 +154,11 @@ function ResizableImageComponent({ node, updateAttributes, deleteNode, selected 
   )
 }
 
-const CustomImage = Image.extend({
-  inline: true,
-  group: 'inline',
-  addAttributes() {
+  const CustomImage = Image.extend({
+    inline: true,
+    group: 'inline',
+    draggable: true,
+    addAttributes() {
     return {
       ...this.parent?.(),
       wrap: {
@@ -376,12 +378,18 @@ export default function NoteEditor({
         return false
       },
       handleDrop: (_view, event, _slice, moved) => {
-        // If moving/dragging an existing node inside the editor, let ProseMirror handle it natively
+        // If an existing image node is being dragged & dropped within the editor, let ProseMirror move it
         if (moved) return false
 
-        // Check if an external image file is being dropped from outside the browser/app
-        if (event.dataTransfer?.files?.length) {
-          const file = event.dataTransfer.files[0]
+        // Check if there is internal ProseMirror drag data (moving node inside editor)
+        if (event.dataTransfer?.types.includes('text/html') || event.dataTransfer?.types.includes('prosemirror/node')) {
+          return false
+        }
+
+        // Only handle real external OS file drops (dropping a new image from desktop/file explorer)
+        const files = event.dataTransfer?.files
+        if (files && files.length > 0) {
+          const file = files[0]
           if (file.type.startsWith('image/')) {
             event.preventDefault()
             handleImageFile(file)
