@@ -97,6 +97,17 @@ input, textarea, [contenteditable] {
   min-height: 50vh;
 }
 
+/* Subtle organic fluid displacement wave hover on note images & cards */
+.image-node-wrapper img {
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), filter 0.45s ease;
+  will-change: transform;
+}
+
+.image-node-wrapper img:hover {
+  transform: scale(1.015) rotate(0.15deg);
+  filter: brightness(1.02);
+}
+
 .tiptap-editor .ProseMirror,
 .tiptap-editor .ProseMirror * {
   line-height: 1.5;

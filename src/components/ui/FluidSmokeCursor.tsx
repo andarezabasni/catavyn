@@ -1,21 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 
-interface TrailPoint {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  age: number
-  maxAge: number
-  baseRadius: number
-  r: number
-  g: number
-  b: number
-  alpha: number
-  isShockwave?: boolean
-}
-
 export default function FluidSmokeCursor() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { isDark } = useTheme()
@@ -41,21 +26,32 @@ export default function FluidSmokeCursor() {
     }
     window.addEventListener('resize', handleResize)
 
-    // Palette: Jesper Landberg luxury fluid feel adapted to Catavyn (Gold & Sage mist)
-    const lightPalette = [
-      { r: 196, g: 168, b: 77 }, // #C4A84D Warm Gold
-      { r: 107, g: 139, b: 106 }, // #6B8B6A Sage Green
-      { r: 210, g: 155, b: 90 }, // Ember Amber
-    ]
+    // Interactive Displacement & Subtle Mist Trail
+    interface Ripple {
+      x: number
+      y: number
+      radius: number
+      maxRadius: number
+      strength: number
+      life: number
+      maxLife: number
+      vx: number
+      vy: number
+    }
 
-    const darkPalette = [
-      { r: 230, g: 195, b: 95 }, // Luminous Gold
-      { r: 140, g: 185, b: 140 }, // Luminous Sage
-      { r: 240, g: 170, b: 110 }, // Warm Amber
-    ]
+    interface MistParticle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      size: number
+      alpha: number
+      life: number
+      maxLife: number
+    }
 
-    const points: TrailPoint[] = []
-    const MAX_POINTS = 220
+    const ripples: Ripple[] = []
+    const mist: MistParticle[] = []
 
     let mouseX = -100
     let mouseY = -100
@@ -86,66 +82,50 @@ export default function FluidSmokeCursor() {
       const dist = Math.hypot(dx, dy)
       const speed = (dist / dt) * 16.67 // speed normalized
 
-      const isHighVelocity = speed > 18
-      const palette = isDarkRef.current ? darkPalette : lightPalette
-
-      // Interpolate along movement vector for seamless continuous viscous fluid body
-      const steps = Math.min(8, Math.max(2, Math.floor(dist / 6)))
-      for (let s = 1; s <= steps; s++) {
-        const ratio = s / steps
-        const ix = lastX + dx * ratio
-        const iy = lastY + dy * ratio
-
-        if (points.length >= MAX_POINTS) points.shift()
-
-        const col = palette[Math.floor(Math.random() * palette.length)]
-        const baseRadius = isHighVelocity
-          ? Math.min(65, 30 + speed * 0.9)
-          : Math.min(38, 16 + speed * 0.4)
-
-        const maxAge = isHighVelocity ? Math.random() * 40 + 35 : Math.random() * 26 + 20
-        const alpha = isHighVelocity
-          ? isDarkRef.current ? 0.38 : 0.32
-          : isDarkRef.current ? 0.24 : 0.18
-
-        points.push({
-          x: ix,
-          y: iy,
-          vx: (dx / dt) * (Math.random() * 0.4 + 0.2),
-          vy: (dy / dt) * (Math.random() * 0.4 + 0.2),
-          age: 0,
-          maxAge,
-          baseRadius,
-          r: col.r,
-          g: col.g,
-          b: col.b,
-          alpha,
-          isShockwave: isHighVelocity,
+      // Spawn subtle water/fluid wave ripple (Jesper Landberg style displacement)
+      if (dist > 4) {
+        ripples.push({
+          x: cx,
+          y: cy,
+          radius: 12,
+          maxRadius: Math.min(130, 45 + speed * 1.6),
+          strength: Math.min(1.0, 0.2 + speed * 0.03),
+          life: 0,
+          maxLife: 42,
+          vx: (dx / dt) * 0.4,
+          vy: (dy / dt) * 0.4,
         })
+        if (ripples.length > 35) ripples.shift()
       }
 
-      // If high velocity flick (hentakan cepat), spawn fluid wave distortion ripples
-      if (isHighVelocity) {
-        const burstCount = 6
-        for (let b = 0; b < burstCount; b++) {
-          if (points.length >= MAX_POINTS) points.shift()
-          const angle = Math.random() * Math.PI * 2
-          const burstSpeed = Math.random() * 4 + 2
-          const col = palette[0]
+      // Spawn very light, airy ambient mist (translucent, non-distracting)
+      if (Math.random() > 0.3) {
+        mist.push({
+          x: cx + (Math.random() - 0.5) * 10,
+          y: cy + (Math.random() - 0.5) * 10,
+          vx: (dx / dt) * 0.15 + (Math.random() - 0.5) * 0.5,
+          vy: (dy / dt) * 0.15 - 0.15, // light buoyant rise
+          size: Math.random() * 22 + 16,
+          alpha: isDarkRef.current ? 0.12 : 0.08,
+          life: 0,
+          maxLife: Math.random() * 30 + 25,
+        })
+        if (mist.length > 50) mist.shift()
+      }
 
-          points.push({
-            x: cx + Math.cos(angle) * 8,
-            y: cy + Math.sin(angle) * 8,
-            vx: Math.cos(angle) * burstSpeed + (dx / dt) * 0.3,
-            vy: Math.sin(angle) * burstSpeed + (dy / dt) * 0.3,
-            age: 0,
-            maxAge: 32,
-            baseRadius: Math.random() * 45 + 25,
-            r: col.r,
-            g: col.g,
-            b: col.b,
-            alpha: isDarkRef.current ? 0.42 : 0.34,
-            isShockwave: true,
+      // If high-velocity shockwave flick, trigger expanding distortion wave
+      if (speed > 22) {
+        for (let r = 0; r < 2; r++) {
+          ripples.push({
+            x: cx + (Math.random() - 0.5) * 15,
+            y: cy + (Math.random() - 0.5) * 15,
+            radius: 20,
+            maxRadius: 180 + speed * 1.5,
+            strength: 0.9,
+            life: 0,
+            maxLife: 55,
+            vx: (dx / dt) * 0.6,
+            vy: (dy / dt) * 0.6,
           })
         }
       }
@@ -163,55 +143,89 @@ export default function FluidSmokeCursor() {
     const render = () => {
       ctx.clearRect(0, 0, width, height)
 
-      // Smooth cursor leading aura (viscous trailing dot like Jesper Landberg)
-      smoothX += (mouseX - smoothX) * 0.22
-      smoothY += (mouseY - smoothY) * 0.22
+      // Smooth lag target cursor
+      smoothX += (mouseX - smoothX) * 0.2
+      smoothY += (mouseY - smoothY) * 0.2
 
-      // Draw subtle ambient cursor glow
-      if (smoothX > 0 && smoothY > 0) {
-        const leadGrad = ctx.createRadialGradient(smoothX, smoothY, 0, smoothX, smoothY, 24)
-        const gColor = isDarkRef.current ? '230, 195, 95' : '196, 168, 77'
-        leadGrad.addColorStop(0, `rgba(${gColor}, 0.28)`)
-        leadGrad.addColorStop(0.5, `rgba(${gColor}, 0.1)`)
-        leadGrad.addColorStop(1, `rgba(${gColor}, 0)`)
-        ctx.fillStyle = leadGrad
-        ctx.beginPath()
-        ctx.arc(smoothX, smoothY, 24, 0, Math.PI * 2)
-        ctx.fill()
-      }
+      const goldR = isDarkRef.current ? 220 : 196
+      const goldG = isDarkRef.current ? 185 : 168
+      const goldB = isDarkRef.current ? 90 : 77
 
-      // Update and render fluid wave points with soft metaball radial gradients
-      for (let i = points.length - 1; i >= 0; i--) {
-        const p = points[i]
-        p.age++
+      // 1. Render Jesper Landberg Fluid Displacement Wave Rings
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rip = ripples[i]
+        rip.life++
+        rip.x += rip.vx
+        rip.y += rip.vy
+        rip.vx *= 0.95
+        rip.vy *= 0.95
 
-        if (p.age >= p.maxAge) {
-          points.splice(i, 1)
+        const progress = rip.life / rip.maxLife
+        const curRadius = rip.radius + (rip.maxRadius - rip.radius) * Math.sin(progress * Math.PI * 0.5)
+        const curAlpha = (1 - progress) * rip.strength * (isDarkRef.current ? 0.18 : 0.12)
+
+        if (rip.life >= rip.maxLife) {
+          ripples.splice(i, 1)
           continue
         }
 
-        // Fluid momentum and viscous damping
-        p.x += p.vx
-        p.y += p.vy
-        p.vx *= 0.94
-        p.vy *= 0.94
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(rip.x, rip.y, curRadius, 0, Math.PI * 2)
+        ctx.lineWidth = Math.max(1, (1 - progress) * 6)
+        ctx.strokeStyle = `rgba(${goldR}, ${goldG}, ${goldB}, ${curAlpha})`
+        ctx.stroke()
 
-        const progress = p.age / p.maxAge
-        // Fluid wave expands and dissipates smoothly
-        const currentRadius = p.baseRadius * (0.6 + Math.sin(progress * Math.PI * 0.5) * 1.1)
-        const currentAlpha = p.alpha * (1 - Math.pow(progress, 1.4))
+        // Subtle fluid refraction wave fill
+        const grad = ctx.createRadialGradient(rip.x, rip.y, curRadius * 0.4, rip.x, rip.y, curRadius)
+        grad.addColorStop(0, `rgba(${goldR}, ${goldG}, ${goldB}, 0)`)
+        grad.addColorStop(0.7, `rgba(${goldR}, ${goldG}, ${goldB}, ${curAlpha * 0.4})`)
+        grad.addColorStop(1, `rgba(${goldR}, ${goldG}, ${goldB}, 0)`)
+        ctx.fillStyle = grad
+        ctx.fill()
+        ctx.restore()
+      }
+
+      // 2. Render airy translucent mist (halus & tidak tebal)
+      for (let m = mist.length - 1; m >= 0; m--) {
+        const pt = mist[m]
+        pt.life++
+        pt.x += pt.vx
+        pt.y += pt.vy
+        pt.vx *= 0.95
+        pt.vy *= 0.95
+
+        const prog = pt.life / pt.maxLife
+        const curSize = pt.size * (0.8 + prog * 0.6)
+        const curAlpha = pt.alpha * (1 - prog)
+
+        if (pt.life >= pt.maxLife) {
+          mist.splice(m, 1)
+          continue
+        }
 
         ctx.save()
-        // Radial soft liquid glow gradient
-        const radGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, currentRadius)
-        radGrad.addColorStop(0, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha})`)
-        radGrad.addColorStop(0.35, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha * 0.75})`)
-        radGrad.addColorStop(0.7, `rgba(${p.r}, ${p.g}, ${p.b}, ${currentAlpha * 0.2})`)
-        radGrad.addColorStop(1, `rgba(${p.r}, ${p.g}, ${p.b}, 0)`)
-
-        ctx.fillStyle = radGrad
+        const mistGrad = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, curSize)
+        mistGrad.addColorStop(0, `rgba(${goldR}, ${goldG}, ${goldB}, ${curAlpha})`)
+        mistGrad.addColorStop(0.5, `rgba(${goldR}, ${goldG}, ${goldB}, ${curAlpha * 0.4})`)
+        mistGrad.addColorStop(1, `rgba(${goldR}, ${goldG}, ${goldB}, 0)`)
+        ctx.fillStyle = mistGrad
         ctx.beginPath()
-        ctx.arc(p.x, p.y, currentRadius, 0, Math.PI * 2)
+        ctx.arc(pt.x, pt.y, curSize, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+      }
+
+      // 3. Subtle floating leading aura at pointer
+      if (smoothX > 0 && smoothY > 0) {
+        ctx.save()
+        const auraGrad = ctx.createRadialGradient(smoothX, smoothY, 0, smoothX, smoothY, 28)
+        auraGrad.addColorStop(0, `rgba(${goldR}, ${goldG}, ${goldB}, ${isDarkRef.current ? 0.2 : 0.14})`)
+        auraGrad.addColorStop(0.5, `rgba(${goldR}, ${goldG}, ${goldB}, 0.05)`)
+        auraGrad.addColorStop(1, `rgba(${goldR}, ${goldG}, ${goldB}, 0)`)
+        ctx.fillStyle = auraGrad
+        ctx.beginPath()
+        ctx.arc(smoothX, smoothY, 28, 0, Math.PI * 2)
         ctx.fill()
         ctx.restore()
       }
